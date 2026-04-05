@@ -1,0 +1,11 @@
+---
+title: "Reference"
+sidebar: reference-home
+---
+
+This section covers input formats and public interfaces.
+
+Pages:
+
+- [Input Files](input-files/): filenames, field shapes, units, and ordering rules.
+- [C++ API](cpp-api/): [state-estimation](https://github.com/jreich218/state-estimation) public API.

@@ -1,0 +1,14 @@
+{
+    "name": "${localWorkspaceFolderBasename}",
+    "dockerFile": "Dockerfile",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "remoteUser": "vscode",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools"
+            ]
+        }
+    }
+}

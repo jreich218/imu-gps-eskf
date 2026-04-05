@@ -1,0 +1,104 @@
+---
+title: "Input Files"
+---
+
+This page records input filenames, fields, units, and ordering rules.
+
+## File selection
+
+For pose and IMU, the app chooses between two kinds of input data in `scenarios`:
+
+- bundled simulated data: `scene_pose.json` and `scene_ms_imu.json`
+- nuScenes data: exactly one matching `scene-XXXX_pose.json` and `scene-XXXX_ms_imu.json` pair. For the app to use nuScenes data, you must do your own nuScenes download. The files from the download are in `nuscenes/can_bus/`.[@nuscenes-canbus-readme; @nuscenes-canbus-api; @nuscenes-canbus-local-2026-03-26]
+
+Selection follows this rule:
+
+- if exactly one matching nuScenes pair is present, the app uses that pair
+- otherwise, the bundled simulated pair supplies the default run
+
+## Shared rules
+
+- each input file is a JSON array [@nuscenes-canbus-local-2026-03-26]
+- each entry has integer microsecond `utime` [@nuscenes-canbus-readme]
+- entries are in strictly increasing time order [@nuscenes-canbus-readme; @nuscenes-canbus-local-2026-03-26]
+- quaternion arrays use `[w, x, y, z]` [@nuscenes-schema; @nuimages-schema]
+- units are SI, with any page-specific exceptions stated explicitly
+
+## `scene_ms_imu.json`
+
+Role: IMU stream used for initialization and propagation.
+
+Minimal example:
+
+```json
+[
+  {
+    "utime": 1700000000000000,
+    "linear_accel": [1.543318572672857, -0.03916157510402117, 9.804608745997307],
+    "rotation_rate": [-0.0018336573502681383, -0.0014580203316534287, -0.001036707959881021],
+    "q": [0.9568021423210139, 0.0, 0.0, 0.29073985012364273]
+  }
+]
+```
+
+Fields:
+
+- `utime`: integer timestamp in microseconds
+- `linear_accel`: specific force in frame `I`, in $\mathrm{m}/\mathrm{s}^2$ [@nuscenes-canbus-readme; @nuscenes-canbus-linear-accel-specific-force-local-2026-03-26]
+- `rotation_rate`: angular velocity in frame `I`, in $\mathrm{rad}/\mathrm{s}$ [@nuscenes-canbus-readme]
+- `q`: orientation field interpreted in this project as ${}^{A}q_{\fsub{I}}$, mapping IMU coordinates into a gravity-aligned frame with arbitrary yaw [@nuscenes-canbus-readme]
+
+Notes:
+
+- `linear_accel` has length 3 [@nuscenes-canbus-local-2026-03-26]
+- `rotation_rate` has length 3 [@nuscenes-canbus-local-2026-03-26]
+- `q` has length 4 [@nuscenes-canbus-local-2026-03-26]
+
+## `scene_pose.json`
+
+Role: reference pose stream used for truth lookup, checks, or evaluation. [@nuscenes-canbus-readme; @caesar2020nuscenes; @nuscenes-issue-1111]
+
+Minimal example:
+
+```json
+[
+  {
+    "utime": 1700000000000000,
+    "pos": [120.0, -45.0, 0.0],
+    "orientation": [0.9939560979566968, 0.0, 0.0, 0.10977830083717481],
+    "vel": [8.272592839624389, 0.0, 0.0],
+    "accel": [1.4902411831299034, 6.58109833210669e-14, 9.8],
+    "rotation_rate": [0.0, 0.0, 7.95530308295156e-15]
+  }
+]
+```
+
+Fields:
+
+- `utime`: integer timestamp in microseconds
+- `pos`: global-frame position in meters [@nuscenes-canbus-readme]
+- `orientation`: quaternion in `[w, x, y, z]` order [@nuscenes-schema; @nuimages-schema]
+- `vel`: ego-frame velocity in $\mathrm{m}/\mathrm{s}$ [@nuscenes-canbus-readme]
+- `accel`: ego-frame acceleration in $\mathrm{m}/\mathrm{s}^2$ [@nuscenes-canbus-readme]
+- `rotation_rate`: ego-frame angular velocity in $\mathrm{rad}/\mathrm{s}$ [@nuscenes-canbus-readme]
+
+Notes:
+
+- this file provides reference data for truth lookup, checks, and evaluation [@nuscenes-canbus-readme; @caesar2020nuscenes; @nuscenes-issue-1111]
+- `pos` has length 3 [@nuscenes-canbus-local-2026-03-26]
+- `orientation` has length 4 [@nuscenes-canbus-local-2026-03-26]
+- `vel`, `accel`, and `rotation_rate` each have length 3 [@nuscenes-canbus-local-2026-03-26]
+- in the dataset shape used here, the pose stream is effectively `pos=[x,y,0]`, `orientation=[w,0,0,z]`, and `vel=[forward,0,0]` [@nuscenes-canbus-local-2026-03-26]
+
+## Timing and cadence
+
+- the streams share one time axis
+- there must be at least one IMU sample with `utime >= first_gps_utime`
+- the pose stream is nominally `50 Hz` and the IMU stream is nominally `100 Hz` [@nuscenes-canbus-readme]
+- the timestamps are real microsecond timestamps, so small jitter and occasional larger gaps should be expected [@nuscenes-canbus-local-2026-03-26]
+- when GPS-like measurements are generated from pose, their timestamps should line up with pose timestamps
+
+See also:
+
+- [Theory / Conventions](../../theory/conventions/)
+- [Theory / Supported Input](../../theory/supported-input/)

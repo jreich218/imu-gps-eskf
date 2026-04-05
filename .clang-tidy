@@ -1,0 +1,91 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  llvm-header-guard,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-goto,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-member-init,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-rvalue-reference-param-not-moved,
+  -misc-const-correctness,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
+  -misc-unused-parameters,
+  -modernize-avoid-c-arrays,
+  -modernize-pass-by-value,
+  -modernize-use-auto,
+  -modernize-use-trailing-return-type,
+  -performance-avoid-endl,
+  -readability-convert-member-functions-to-static,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
+  -readability-identifier-length,
+  -readability-isolate-declaration,
+  -readability-magic-numbers,
+  -readability-qualified-auto,
+  -readability-redundant-access-specifiers
+HeaderFilterRegex: '(^|.*/)(include|src)/'
+FormatStyle: file
+CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.TypeAliasCase: CamelCase
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.TypeTemplateParameterCase: CamelCase
+  readability-identifier-naming.TemplateTemplateParameterCase: CamelCase
+  readability-identifier-naming.FunctionCase: CamelCase
+  readability-identifier-naming.GlobalFunctionCase: CamelCase
+  readability-identifier-naming.GlobalFunctionIgnoredRegexp: '^(main|wmain)$'
+  readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.PointerParameterCase: lower_case
+  readability-identifier-naming.ConstantPointerParameterCase: lower_case
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberSuffix: _
+  readability-identifier-naming.PublicMemberCase: lower_case
+  readability-identifier-naming.PublicMemberIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'
+  readability-identifier-naming.GlobalConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantPrefix: k
+  readability-identifier-naming.GlobalConstexprVariableCase: CamelCase
+  readability-identifier-naming.GlobalConstexprVariablePrefix: k
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.StaticConstantPrefix: k
+  readability-identifier-naming.StaticConstexprVariableCase: CamelCase
+  readability-identifier-naming.StaticConstexprVariablePrefix: k
+  readability-identifier-naming.ClassConstantCase: CamelCase
+  readability-identifier-naming.ClassConstantPrefix: k
+  readability-identifier-naming.ClassConstexprCase: CamelCase
+  readability-identifier-naming.ClassConstexprPrefix: k
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.EnumConstantPrefix: k
+  readability-identifier-naming.ScopedEnumConstantCase: CamelCase
+  readability-identifier-naming.ScopedEnumConstantPrefix: k
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.VariableIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'
+  readability-identifier-naming.ParameterIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'

@@ -1,0 +1,28 @@
+#ifndef INITIALIZATION_HPP
+#define INITIALIZATION_HPP
+
+#include <optional>
+#include <vector>
+
+#include "scene_types.hpp"
+
+/**
+ * @defgroup Initialization Initialization
+ * @brief Compute the startup state used to begin live filtering.
+ * @{
+ */
+
+/**
+ * @brief Compute the startup initialization from IMU and GPS samples.
+ *
+ * @param imu_samples Loaded IMU samples.
+ * @param gps_samples Generated GPS samples.
+ * @return The startup initialization, if one can be computed.
+ */
+std::optional<StartupInitialization> ComputeStartupInitialization(
+    const std::vector<ImuSample>& imu_samples,
+    const std::vector<GpsSample>& gps_samples);
+
+/** @} */
+
+#endif  // INITIALIZATION_HPP

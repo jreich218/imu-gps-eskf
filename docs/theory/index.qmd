@@ -1,0 +1,12 @@
+---
+title: "Theory"
+---
+
+This section explains the math, frame conventions, and estimator-side assumptions used by the project.
+
+Pages:
+
+- [Conventions](conventions/): frame names, quaternion names, storage order, and sign choices.
+- [Supported Input](supported-input/): what the project assumes about the pose, IMU, and GPS-like streams it works with.
+
+Theory pages are organized by subsystem and explain how the estimator works. API details live in Reference.

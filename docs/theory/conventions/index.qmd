@@ -1,0 +1,134 @@
+---
+title: "Conventions"
+---
+
+This page records the cross-cutting conventions used in the code and the docs.
+
+## Frames
+
+- `G` means global frame. In this project it is a map-local Cartesian frame in meters. [@nuscenes-issue-56; @nuscenes-issue-108; @nuscenes-issue-122; @nuscenes-issue-699]
+- `I` means IMU frame.
+- `B` means body or ego frame.
+- `A` means gravity-aligned frame with arbitrary yaw. [@nuscenes-canbus-readme]
+
+In this project the IMU and body frames are treated as collocated, so code usually uses `I` unless the distinction matters. [@caesar2020nuscenes; @nuscenes-issue-108; @nuscenes-issue-56; @nuscenes-issue-699; @nuscenes-issue-1066]
+
+For the nuScenes-shaped inputs used here, the body and IMU frames both use the usual Forward-Left-Up axis convention:
+
+- `x` forward
+- `y` left
+- `z` up
+
+The body reference is the vehicle reference near the midpoint of the rear axle. For this project, the IMU reference is treated the same way. [@caesar2020nuscenes; @nuscenes-issue-108; @nuscenes-issue-56; @nuscenes-issue-699; @nuscenes-issue-1066]
+
+## Frame notation and code names
+
+In the docs, a vector carries the frame of its coordinates as a left superscript. A transform carries the target frame as a left superscript and the source frame as a right subscript.
+
+In code, the same quantities appear in compact variable names.
+
+Examples:
+
+- ${}^{A}q_{\fsub{I}}$ in the docs is `q_AI` in code
+- ${}^{G}q_{\fsub{I}}$ in the docs is `q_GI` in code
+- ${}^{I}q_{\fsub{A}}$ in the docs is `q_IA` in code
+- ${}^{G}R_I$ in the docs is `R_GI` in code
+- ${}^{A}\mathbf{v}$ in the docs is `v_A` in code
+- ${}^{G}\mathbf{p}_0$ in the docs is `p0_G` in code
+- ${}^{G}\mathbf{v}_0$ in the docs is `v0_G` in code
+
+A practical reading rule is: target frame on the left, source frame on the right.
+
+If ${}^{I}\mathbf{v}$ is a vector expressed in frame `I`, then the docs write:
+
+$$
+{}^{A}\mathbf{v} = {}^{A}R_I \, {}^{I}\mathbf{v}
+$$
+
+and the corresponding code might look like:
+
+```cpp
+const Eigen::Vector3d v_A = q_AI * v_I;
+```
+
+In both cases, the same physical vector is being re-expressed in frame `A`.
+
+Composition follows the usual chained-frame rule:
+
+$$
+{}^{X}q_{\fsub{Z}} = {}^{X}q_{\fsub{Y}} \otimes {}^{Y}q_{\fsub{Z}},
+\qquad
+{}^{X}R_Z = {}^{X}R_Y \, {}^{Y}R_Z
+$$
+
+For a unit quaternion, the inverse is the conjugate:
+
+$$
+{}^{Y}q_{\fsub{X}} = ({}^{X}q_{\fsub{Y}})^{-1} = ({}^{X}q_{\fsub{Y}})^*
+$$
+
+The docs use passive coordinate-transform notation. The quaternion and matrix forms say the same thing:
+
+$$
+(0, {}^{A}\mathbf{v}) = {}^{A}q_{\fsub{I}} \otimes (0, {}^{I}\mathbf{v}) \otimes {}^{I}q_{\fsub{A}}
+\quad \Longleftrightarrow \quad
+{}^{A}\mathbf{v} = {}^{A}R_I \, {}^{I}\mathbf{v}
+$$
+
+## Vector names
+
+In the docs, vectors carry their expression frame as a left superscript.
+
+Examples:
+
+- ${}^{A}\mathbf{g}$
+- ${}^{I}\mathbf{g}$
+- ${}^{G}\mathbf{p}_0$
+- ${}^{G}\mathbf{v}_0$
+
+In code, the same quantities appear as `g_A`, `g_I`, `p0_G`, and `v0_G`.
+
+The trailing `0` in names like `p0_G` is a time or index label. The trailing `G` is still the expression frame.
+
+## Points and free vectors
+
+Points and free vectors do not behave the same way under a change of frame.
+
+- Points pick up both rotation and translation.
+- Free vectors pick up rotation only.
+
+Displacement vectors are differences of points, so the translation part cancels out and only the rotation remains.
+
+That is the convention behind the usual physical vectors in this repo, such as:
+
+- `omega`
+- `f`
+- `g`
+- `v`
+- `a`
+
+These are Newtonian vectors, so they are re-expressed by rotation only.
+
+## Quaternion storage
+
+Quaternion arrays read from JSON use `[w, x, y, z]` order. [@nuscenes-schema; @nuimages-schema]
+
+That same order is used when constructing an Eigen quaternion:
+
+```cpp
+const Eigen::Quaterniond q(w, x, y, z);
+```
+
+## Gravity and sign choices
+
+Frame `A` is gravity-aligned with `+z` up.
+
+So the gravity vector expressed in `A` is:
+
+$$
+{}^{A}\mathbf{g} = \begin{bmatrix} 0 \\ 0 \\ -g \end{bmatrix}
+$$
+
+The IMU quaternion ${}^{A}q_{\fsub{I}}$ provides the gravity-aligned reference frame used for tilt. [@nuscenes-canbus-readme]
+
+Quaternion multiplication uses the Hamilton convention.
