@@ -1,22 +1,22 @@
 #include "gps_generation.hpp"
 
-#include <cmath>
+#include <cstdint>
 #include <random>
 
 #include "scene_types.hpp"
 
+namespace {
+
+constexpr std::int64_t kMinGpsDtUs = 100000;
+constexpr double kGpsSigmaXY = 2.0;
+constexpr unsigned int kGpsSeed = 1234;
+
+}  // namespace
+
 std::vector<GpsSample> GenerateGpsSamplesFromPose(
     const std::vector<PoseSample>& pose_samples) {
     // 1. Use the same fixed synthetic-GPS settings as the older app:
-    //    `10 Hz`, `2 m` xy noise, and seed `1234`.
-    // NOLINTNEXTLINE(readability-identifier-naming)
-    constexpr double kGpsHz = 10.0;
-    // NOLINTNEXTLINE(readability-identifier-naming)
-    constexpr double kGpsSigmaXY = 2.0;
-    // NOLINTNEXTLINE(readability-identifier-naming)
-    constexpr unsigned int kGpsSeed = 1234;
-    const long long desired_dt_us =
-        static_cast<long long>(std::llround(1e6 / kGpsHz));
+    //    minimum GPS interval `100000 us`, `2 m` xy noise, and seed `1234`.
 
     // 2. Create the random-number machinery for independent Gaussian noise in
     //    `x` and `y`.
@@ -28,22 +28,22 @@ std::vector<GpsSample> GenerateGpsSamplesFromPose(
     //    what the timestamp of that last kept sample was.
     std::vector<GpsSample> gps_samples;
     gps_samples.reserve(pose_samples.size());
-    bool first_kept = false;
-    long long last_kept_utime = 0;
+    bool have_last_kept_utime = false;
+    std::int64_t last_kept_utime = 0;
 
     // 4. Go through the pose samples in time order. Keep the first pose sample
     //    no matter what, so the generated GPS stream starts at the first pose
     //    timestamp.
     for (const PoseSample& pose_sample : pose_samples) {
-        const long long utime = pose_sample.utime;
+        const std::int64_t utime = pose_sample.utime;
 
         // 5. For each later pose sample, compare its timestamp to the
-        //    timestamp of the last pose sample we kept. Skip it unless enough
-        //    time has passed for one `10 Hz` GPS step.
-        if (!first_kept) {
-            first_kept = true;
+        //    timestamp of the last pose sample we kept. Skip it unless at
+        //    least `kMinGpsDtUs` has passed.
+        if (!have_last_kept_utime) {
+            have_last_kept_utime = true;
             last_kept_utime = utime;
-        } else if (utime - last_kept_utime < desired_dt_us) {
+        } else if (utime - last_kept_utime < kMinGpsDtUs) {
             continue;
         } else {
             last_kept_utime = utime;
