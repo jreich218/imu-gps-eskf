@@ -10,8 +10,7 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
     //    using that sample and the next `2` GPS samples. Then extend the GPS
     //    window by one sample at a time and refit the quadratic path in time
     //    to the GPS `x` and `y` coordinates.
-    // 3. *** WHERE I LEFT OFF READING *** For each fitted path, compute the
-    // local tangent heading and local
+    // 3. For each fitted path, compute the local tangent heading and local
     //    speed at the end of the path.
     // 4. Summarize the GPS cloud with a principal-direction calculation, use
     //    it to get a global heading, and use IMU yaw accumulation to make that
@@ -29,7 +28,7 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
     // 9. Carry that ready state forward to the first IMU sample at or after
     //     the ready time, update the yaw by the IMU yaw accumulated across the
     //     carry interval, and record `next_imu_index` and `next_gps_index`.
-    // 11. Return the completed `StartupInitialization`. If no GPS window ever
+    // 10. Return the completed `StartupInitialization`. If no GPS window ever
     //     becomes trustworthy, return no result.
     (void)imu_samples;
     (void)gps_samples;
