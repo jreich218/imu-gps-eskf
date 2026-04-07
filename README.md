@@ -1,4 +1,4 @@
-# State Estimation
+# IMU GPS ESKF
 
 This repository is a C++/Eigen IMU+GPS Error-State Kalman Filter baseline for ego-state estimation.
 
