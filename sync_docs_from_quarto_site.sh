@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SOURCE_DOCS_DIR="/home/dfw/dev/quarto_site/docs"
-DEST_DOCS_DIR="/home/dfw/dev/state-estimation/docs"
+DEST_DOCS_DIR="/home/dfw/dev/imu-gps-eskf/docs"
 
 if [[ ! -d "${SOURCE_DOCS_DIR}" ]]; then
     echo "Missing source docs directory: ${SOURCE_DOCS_DIR}" >&2

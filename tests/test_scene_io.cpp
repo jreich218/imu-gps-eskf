@@ -39,7 +39,7 @@ class TempDir {
     const auto stamp =
         std::chrono::steady_clock::now().time_since_epoch().count();
     path_ = fs::temp_directory_path() /
-            ("state-estimation-scene-io-" + std::to_string(stamp) + "-" +
+            ("imu-gps-eskf-scene-io-" + std::to_string(stamp) + "-" +
              std::to_string(counter++));
     fs::create_directories(path_);
   }

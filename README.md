@@ -1,4 +1,4 @@
-# IMU GPS ESKF
+# IMU-GPS-ESKF
 
 This repository is a C++/Eigen IMU+GPS Error-State Kalman Filter baseline for ego-state estimation.
 
@@ -27,8 +27,8 @@ This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and 
 Start here:
 
 ```bash
-git clone https://github.com/jreich218/state-estimation.git
-cd state-estimation
+git clone https://github.com/jreich218/imu-gps-eskf.git
+cd imu-gps-eskf
 ```
 
 The local package-install commands below assume Debian or Ubuntu.

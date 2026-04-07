@@ -4,7 +4,7 @@ This app does not do any data verification. Because of the first paragraph of `/
 
 Any time I mention "project docs", I am talking about the content in the `docs/` folder at `/home/dfw/dev/quarto_site/docs`. Do not read the `docs/` folder in this repo, it is a stale mirror of the Quarto-site docs.
 
-Please read the project docs at `/home/dfw/dev/quarto_site/docs`, the `README.md` at the root of this repo, and the code in this repo in order to orient yourself. Please also read the older version of this app at `/home/dfw/dev/state-estimation-version-being-rewritten`. There are important things to note about the old version of this app and how it relates to this version:
+Please read the project docs at `/home/dfw/dev/quarto_site/docs`, the `README.md` at the root of this repo, and the code in this repo in order to orient yourself. Please also read the older version of this app at `/home/dfw/dev/imu-gps-eskf-version-being-rewritten`. There are important things to note about the old version of this app and how it relates to this version:
 
 1. This version *will* have the same features the old one had.
 2. This version *will* be an ESKF implementation that works on the nuScenes and bundled simulated-input-data, just like the old version. The filter uses simulated GPS data and IMU data.

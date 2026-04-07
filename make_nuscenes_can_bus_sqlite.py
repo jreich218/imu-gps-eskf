@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 DATA_ROOT = Path("/data/sets/nuscenes/can_bus")
-DB_PATH = Path("/home/dfw/dev/state-estimation/tmp/nuscenes_can_bus.sqlite3")
+DB_PATH = Path("/home/dfw/dev/imu-gps-eskf/tmp/nuscenes_can_bus.sqlite3")
 
 
 def load_json_array(path: Path) -> list[dict]:
