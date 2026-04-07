@@ -1,0 +1,87 @@
+---
+title: "Groups"
+description: "Browse public free functions."
+toc-expand: true
+body-classes: "cpp-api-page cpp-api-groups-page"
+---
+
+::: {.cpp-api-function-index}
+::: {.cpp-api-function-index-group}
+[Scene I/O]{.cpp-api-function-index-label}
+
+[`ChooseSceneInputs`](#choose-scene-inputs) · [`LoadScene`](#load-scene)
+:::
+
+::: {.cpp-api-function-index-group}
+[Initialization]{.cpp-api-function-index-label}
+
+[`Initialize`](#initialize)
+:::
+:::
+
+## Scene I/O {#scene-io}
+
+Selecting input files and loading scene data.
+
+### `ChooseSceneInputs` {#choose-scene-inputs}
+
+Select the pose and IMU files for the run.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L17">source</a></div>
+
+```cpp
+SceneInputs ChooseSceneInputs();
+```
+:::
+
+#### Output
+
+The chosen input file pair.
+
+### `LoadScene` {#load-scene}
+
+Load the selected pose and IMU streams.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L28">source</a></div>
+
+```cpp
+LoadedScene LoadScene(const SceneInputs& scene_inputs);
+```
+:::
+
+#### Inputs
+
+- `scene_inputs`: Selected pose and IMU file paths.
+
+#### Output
+
+Loaded pose and IMU samples.
+
+#### Non-obvious behavior
+
+If exactly one final pose sample occurs after the last IMU sample, it is
+dropped during load.
+
+## Initialization {#initialization}
+
+Startup state estimation.
+
+### `Initialize` {#initialize}
+
+Compute the initial state estimate.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L13">source</a></div>
+
+```cpp
+void Initialize();
+```
+:::

@@ -1,0 +1,128 @@
+@misc{caesar2020nuscenes,
+  title = {nuScenes: A multimodal dataset for autonomous driving},
+  author = {Caesar, Holger and Bankiti, Varun and Lang, Alex H. and Vora, Sourabh and Liong, Venice Erin and Xu, Qiang and Krishnan, Anush and Pan, Yu and Baldan, Giancarlo and Beijbom, Oscar},
+  year = {2020},
+  eprint = {1903.11027},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG},
+  note = {arXiv:1903.11027v5},
+  url = {https://arxiv.org/abs/1903.11027}
+}
+
+@manual{nuscenes-devkit-root-readme,
+  title = {nuScenes devkit},
+  organization = {nuScenes devkit},
+  year = {2025},
+  note = {Repository README, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/README.md}
+}
+
+@manual{nuscenes-canbus-readme,
+  title = {nuScenes CAN bus expansion},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository documentation file, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/can_bus/README.md}
+}
+
+@manual{nuscenes-canbus-api,
+  title = {nuScenes CAN bus API implementation},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository source file, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/can_bus/can_bus_api.py}
+}
+
+@manual{nuscenes-canbus-tutorial,
+  title = {nuScenes CAN bus tutorial},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository notebook, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/tutorials/can_bus_tutorial.ipynb}
+}
+
+@online{nuscenes-issue-1111,
+  title = {Which one is the IMU data? ego\_pose.json/V1.0-trainval, scene-xxxx\_ms\_imu.json/can\_bus, or scene-xxxx\_pose.json/can\_bus?},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2024},
+  note = {GitHub issue with maintainer response from whyekit-motional, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/1111}
+}
+
+@online{nuscenes-issue-108,
+  title = {Calibrated\_sensors location},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2019},
+  note = {GitHub issue with maintainer response from holger-motional, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/108}
+}
+
+@online{nuscenes-issue-56,
+  title = {I would like to get the (x,y,z) coordinates of of the ego vehicle.},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2019},
+  note = {GitHub issue with maintainer response from holger-motional, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/56}
+}
+
+@online{nuscenes-issue-699,
+  title = {the relationship between the coordinate system ?},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2021},
+  note = {GitHub issue with maintainer response from whyekit-motional, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/699}
+}
+
+@online{nuscenes-issue-122,
+  title = {construct coordinate frames parallel to gravity},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2019},
+  note = {GitHub issue with maintainer response from oscar-nutonomy, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/122}
+}
+
+@online{nuscenes-issue-1066,
+  title = {About coordinate and box\_velocity},
+  author = {{nuScenes devkit issue tracker}},
+  year = {2024},
+  note = {GitHub issue with maintainer response from whyekit-motional, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/issues/1066}
+}
+
+@manual{nuscenes-schema,
+  title = {nuScenes schema},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository documentation file, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/docs/schema_nuscenes.md}
+}
+
+@manual{nuimages-schema,
+  title = {nuImages schema},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository documentation file, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/docs/schema_nuimages.md}
+}
+
+@manual{nuscenes-physics-baselines,
+  title = {nuScenes devkit prediction physics baselines},
+  organization = {nuScenes devkit},
+  year = {2020},
+  note = {Repository source file, accessed 2026-03-26},
+  url = {https://github.com/nutonomy/nuscenes-devkit/blob/master/python-sdk/nuscenes/prediction/models/physics.py}
+}
+
+@misc{nuscenes-canbus-local-2026-03-26,
+  title = {Data from nuScenes CAN bus expansion used for local inspection of the nuScenes CAN-bus corpus},
+  author = {{nuScenes}},
+  year = {2020},
+  note = {Published February 2020 by nuScenes. Jason Reich ran local inspection tests on this data; used for on-disk file counts, per-record key sets, timestamp monotonicity checks, and corpus statistics for the CAN-bus scene files}
+}
+
+@misc{nuscenes-canbus-linear-accel-specific-force-local-2026-03-26,
+  title = {Data from nuScenes CAN bus expansion used for local analysis of IMU linear\_accel as specific force},
+  author = {{nuScenes}},
+  year = {2020},
+  note = {Published February 2020 by nuScenes. Jason Reich ran local analysis tests on this data. IMU linear_accel was rotated into the gravity-aligned frame defined by q, and near-stationary moments were identified from the pose stream. Over 147006 matched near-stationary samples, the gravity-aligned stationary mean was [0.00016, 0.00224, 9.79705] and the median was [-0.00007, 0.00126, 9.79619], supporting the interpretation of linear_accel as specific force with gravity handled separately.}
+}
