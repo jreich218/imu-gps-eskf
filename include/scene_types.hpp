@@ -52,7 +52,7 @@ struct StartupInitialization {
     std::size_t next_imu_index =
         0;  ///< First IMU sample that wasn't used by initialization.
     std::size_t next_gps_index =
-        0;  ///< First GSP sample that wasn't used by initialization.
+        0;  ///< First GPS sample that wasn't used by initialization.
 };
 
 #endif  // SCENE_TYPES_HPP
