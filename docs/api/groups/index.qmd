@@ -13,9 +13,15 @@ body-classes: "cpp-api-page cpp-api-groups-page"
 :::
 
 ::: {.cpp-api-function-index-group}
+[GPS Generation]{.cpp-api-function-index-label}
+
+[`GenerateGpsSamplesFromPose`](#generate-gps-samples-from-pose)
+:::
+
+::: {.cpp-api-function-index-group}
 [Initialization]{.cpp-api-function-index-label}
 
-[`Initialize`](#initialize)
+[`ComputeStartupInitialization`](#compute-startup-initialization)
 :::
 :::
 
@@ -68,20 +74,58 @@ Loaded pose and IMU samples.
 If exactly one final pose sample occurs after the last IMU sample, it is
 dropped during load.
 
-## Initialization {#initialization}
+## GPS Generation {#gps-generation}
 
-Startup state estimation.
+Generate synthetic GPS samples from pose samples.
 
-### `Initialize` {#initialize}
+### `GenerateGpsSamplesFromPose` {#generate-gps-samples-from-pose}
 
-Compute the initial state estimate.
+Generate synthetic GPS samples from the loaded pose stream.
 
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L13">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/gps_generation.hpp#L20">source</a></div>
 
 ```cpp
-void Initialize();
+std::vector<GpsSample> GenerateGpsSamplesFromPose(
+    const std::vector<PoseSample>& pose_samples);
 ```
 :::
+
+#### Inputs
+
+- `pose_samples`: Loaded pose samples.
+
+#### Output
+
+Generated GPS samples.
+
+## Initialization {#initialization}
+
+Compute the startup state used to begin live filtering.
+
+### `ComputeStartupInitialization` {#compute-startup-initialization}
+
+Compute the startup initialization from IMU and GPS samples.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L22">source</a></div>
+
+```cpp
+std::optional<StartupInitialization> ComputeStartupInitialization(
+    const std::vector<ImuSample>& imu_samples,
+    const std::vector<GpsSample>& gps_samples);
+```
+:::
+
+#### Inputs
+
+- `imu_samples`: Loaded IMU samples.
+- `gps_samples`: Generated GPS samples.
+
+#### Output
+
+The startup initialization, if one can be computed.

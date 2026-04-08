@@ -67,4 +67,21 @@ if(BUILD_TESTING)
   endif()
 
   gtest_discover_tests(gps_generation_tests)
+
+  add_executable(initialization_tests
+    tests/test_initialization.cpp
+    src/initialization.cpp
+  )
+
+  target_include_directories(initialization_tests PRIVATE include)
+  target_link_libraries(initialization_tests PRIVATE
+    Eigen3::Eigen
+    GTest::gtest_main
+  )
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(initialization_tests PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+
+  gtest_discover_tests(initialization_tests)
 endif()
