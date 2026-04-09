@@ -132,4 +132,4 @@ struct StartupInitialization
 - `p0_G`: Initial position in frame G.
 - `q0_GI`: Initial attitude from I to G.
 - `next_imu_index`: First IMU sample that wasn't used by initialization.
-- `next_gps_index`: First GSP sample that wasn't used by initialization.
+- `next_gps_index`: First GPS sample that wasn't used by initialization.

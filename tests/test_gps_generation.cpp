@@ -2,6 +2,7 @@
 #include "scene_types.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include <Eigen/Geometry>
@@ -9,7 +10,7 @@
 
 namespace {
 
-PoseSample MakePoseSample(long long utime, double x, double y) {
+PoseSample MakePoseSample(std::int64_t utime, double x, double y) {
   PoseSample pose_sample;
   pose_sample.utime = utime;
   pose_sample.pos = Eigen::Vector3d(x, y, 0.0);
@@ -35,7 +36,7 @@ TEST(GenerateGpsSamplesFromPose, KeepsFirstPoseTimestamp) {
 }
 
 TEST(GenerateGpsSamplesFromPose, Uses100msGatingFromLastKeptSample) {
-  constexpr long long kBaseUtime = 1000000;
+  constexpr std::int64_t kBaseUtime = 1000000;
 
   const std::vector<PoseSample> pose_samples = {
       MakePoseSample(kBaseUtime + 0, 0.0, 0.0),
@@ -89,8 +90,8 @@ TEST(GenerateGpsSamplesFromPose, Uniform20msPoseStreamProducesEveryFifthSample) 
   std::vector<PoseSample> pose_samples;
   pose_samples.reserve(16);
 
-  constexpr long long kBaseUtime = 2000000;
-  constexpr long long kPoseDtUs = 20000;
+  constexpr std::int64_t kBaseUtime = 2000000;
+  constexpr std::int64_t kPoseDtUs = 20000;
 
   for (int i = 0; i < 16; ++i) {
     pose_samples.push_back(

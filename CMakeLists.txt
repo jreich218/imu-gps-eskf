@@ -14,10 +14,12 @@ add_executable(imu-gps-eskf
   include/scene_io.hpp
   include/scene_types.hpp
   include/gps_generation.hpp
+  include/eskf.hpp
   main.cpp
   src/initialization.cpp
   src/scene_io.cpp
   src/gps_generation.cpp
+  src/eskf.cpp
 )
 
 target_include_directories(imu-gps-eskf PRIVATE include)

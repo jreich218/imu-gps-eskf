@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -82,7 +83,7 @@ std::vector<PoseSample> LoadPoseSamples(const Json& json) {
 
     for (const auto& entry : json) {
         PoseSample pose_sample;
-        pose_sample.utime = entry.at("utime").get<long long>();
+        pose_sample.utime = entry.at("utime").get<std::int64_t>();
 
         const auto& pos = entry.at("pos");
         pose_sample.pos = Eigen::Vector3d(pos.at(0).get<double>(),
@@ -113,7 +114,7 @@ std::vector<ImuSample> LoadImuSamples(const Json& json) {
 
     for (const auto& entry : json) {
         ImuSample imu_sample;
-        imu_sample.utime = entry.at("utime").get<long long>();
+        imu_sample.utime = entry.at("utime").get<std::int64_t>();
 
         const auto& linear_accel = entry.at("linear_accel");
         imu_sample.specific_force =
@@ -146,7 +147,7 @@ void DropSingleTrailingPoseSample(std::vector<PoseSample>& pose_samples,
         return;
     }
 
-    const long long last_imu_utime = imu_samples.back().utime;
+    const std::int64_t last_imu_utime = imu_samples.back().utime;
     std::size_t num_pose_samples_after_last_imu = 0;
 
     for (const PoseSample& pose_sample : pose_samples) {

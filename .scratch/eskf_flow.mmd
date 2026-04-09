@@ -1,0 +1,22 @@
+flowchart TD
+    A[Startup initialization<br/>provides p0, v0, q0] --> B[Initialize nominal state<br/>and covariance]
+    B --> C{Next measurement}
+
+    C -->|IMU| D[Predict nominal state<br/>from omega and accel]
+    D --> E[Propagate covariance]
+    E --> F[Current estimate]
+    F --> C
+
+    C -->|GPS| G[Form xy innovation]
+    G --> H[Compute Kalman gain]
+    H --> I[Correct position<br/>velocity, attitude]
+    I --> J[Update covariance]
+    J --> F
+
+    classDef init fill:#f7f2e8,stroke:#8c7a5b,color:#2f2618;
+    classDef predict fill:#eaf4f4,stroke:#5f8a8a,color:#1f3030;
+    classDef update fill:#f3eef8,stroke:#7c66a1,color:#2b2236;
+
+    class A,B init;
+    class D,E,F predict;
+    class G,H,I,J update;

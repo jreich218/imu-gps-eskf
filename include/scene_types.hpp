@@ -1,6 +1,8 @@
 #ifndef SCENE_TYPES_HPP
 #define SCENE_TYPES_HPP
 
+#include <cstdint>
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <filesystem>
@@ -14,7 +16,7 @@ struct SceneInputs {
 
 /// One pose sample from the pose stream.
 struct PoseSample {
-    long long utime = 0;                 ///< Timestamp in microseconds.
+    std::int64_t utime = 0;  ///< Timestamp in microseconds as std::int64_t.
     Eigen::Vector3d pos{0.0, 0.0, 0.0};  ///< Global position in meters.
     Eigen::Quaterniond orientation{1.0, 0.0, 0.0, 0.0};  ///< Pose orientation.
     Eigen::Vector3d vel{0.0, 0.0, 0.0};                  ///< Velocity sample.
@@ -22,7 +24,7 @@ struct PoseSample {
 
 /// One IMU sample from the IMU stream.
 struct ImuSample {
-    long long utime = 0;  ///< Timestamp in microseconds.
+    std::int64_t utime = 0;  ///< Timestamp in microseconds as std::int64_t.
     Eigen::Vector3d specific_force{
         0.0, 0.0, 0.0};  ///< Specific force in frame I.
     Eigen::Vector3d rotation_rate{
@@ -39,7 +41,7 @@ struct LoadedScene {
 
 /// One GPS-like sample.
 struct GpsSample {
-    long long utime = 0;           ///< Timestamp in microseconds.
+    std::int64_t utime = 0;  ///< Timestamp in microseconds as std::int64_t.
     Eigen::Vector2d xy{0.0, 0.0};  ///< Horizontal position in meters.
 };
 

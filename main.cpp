@@ -7,23 +7,17 @@
 #include "scene_types.hpp"
 
 int main() {
-    // #####################################
-    // 1. Select and load pose and IMU data
-    // #####################################
+    // Select and load pose and IMU data
     SceneInputs scene_inputs = ChooseSceneInputs();
     LoadedScene loaded_scene = LoadScene(scene_inputs);
     (void)loaded_scene;
-    // #####################################
-    // 2. Generate synthetic GPS from pose
-    // #####################################
-    // See include/gps_generation.hpp
+    // Generate synthetic GPS from pose
     std::vector<GpsSample> gps_samples =
         GenerateGpsSamplesFromPose(loaded_scene.pose_samples);
-    // #####################################
-    // 3. Create the initial state for the filter
-    // #####################################
+    // Initial state for the filter
     std::optional<StartupInitialization> startup_initialization =
         ComputeStartupInitialization(loaded_scene.imu_samples, gps_samples);
+    // Initialize filter covariance
 
     return 0;
 }
