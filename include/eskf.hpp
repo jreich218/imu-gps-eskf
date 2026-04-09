@@ -20,7 +20,7 @@ class Eskf {
 
     NominalState x_;
     Eigen::Matrix<double, 9, 9> P_;
-    std::atomic_int64_t last_imu_utime_ = 0;
+    std::int64_t last_imu_utime_ = 0;
     bool initialized_ = false;
 };
 
