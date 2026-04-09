@@ -1,6 +1,8 @@
 #include <optional>
+#include <stdexcept>
 #include <vector>
 
+#include "eskf.hpp"
 #include "gps_generation.hpp"
 #include "initialization.hpp"
 #include "scene_io.hpp"
@@ -17,7 +19,11 @@ int main() {
     // Initial state for the filter
     std::optional<StartupInitialization> startup_initialization =
         ComputeStartupInitialization(loaded_scene.imu_samples, gps_samples);
+    if (!startup_initialization.has_value()) {
+        throw std::runtime_error("Could not compute startup initialization.");
+    }
     // Initialize filter covariance
-
+    Eskf eskf;
+    eskf.Initialize(*startup_initialization);
     return 0;
 }

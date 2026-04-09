@@ -68,6 +68,7 @@ TEST(ComputeStartupInitialization,
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 5U);
     EXPECT_EQ(startup_initialization->next_gps_index, 6U);
+    EXPECT_EQ(startup_initialization->utime_last_imu, 500000);
     EXPECT_NEAR(startup_initialization->p0_G.x(), 12.0, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.z(), 0.0, 1e-9);
@@ -97,6 +98,7 @@ TEST(ComputeStartupInitialization, CarriesTheReadyStateToTheFirstLaterImuSample)
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 5U);
     EXPECT_EQ(startup_initialization->next_gps_index, 5U);
+    EXPECT_EQ(startup_initialization->utime_last_imu, 520000);
     EXPECT_NEAR(startup_initialization->p0_G.x(), 12.6, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_initialization->v0_G.x(), 30.0, 1e-9);
@@ -150,6 +152,7 @@ TEST(ComputeStartupInitialization, RelaxesProjectedSeparationAfterEightyGpsPoint
     ASSERT_TRUE(startup_at_eighty.has_value());
     EXPECT_EQ(startup_at_eighty->next_imu_index, 80U);
     EXPECT_EQ(startup_at_eighty->next_gps_index, 80U);
+    EXPECT_EQ(startup_at_eighty->utime_last_imu, 8000000);
     EXPECT_NEAR(startup_at_eighty->p0_G.x(), 7.9, 1e-9);
     EXPECT_NEAR(startup_at_eighty->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_at_eighty->v0_G.norm(), 1.0, 1e-6);
@@ -235,6 +238,7 @@ TEST(ComputeStartupInitialization,
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 6U);
     EXPECT_EQ(startup_initialization->next_gps_index, 6U);
+    EXPECT_EQ(startup_initialization->utime_last_imu, 600000);
     EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI), 0.56, 0.12);
     EXPECT_NEAR(startup_initialization->v0_G.head<2>().norm(), 20.8517, 0.1);
 }

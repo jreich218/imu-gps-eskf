@@ -584,6 +584,7 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
         ready_estimate.velocity_xy.x(), ready_estimate.velocity_xy.y(), 0.0);
     startup_initialization.q0_GI =
         BuildGlobalOrientation(carried_yaw_rad, handoff_imu_sample);
+    startup_initialization.utime_last_imu = handoff_imu_sample.utime;
     startup_initialization.next_imu_index = handoff_imu_index + 1;
     startup_initialization.next_gps_index = ready_estimate.next_gps_index;
     return startup_initialization;

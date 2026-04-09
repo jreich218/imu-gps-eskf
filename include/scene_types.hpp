@@ -1,10 +1,9 @@
 #ifndef SCENE_TYPES_HPP
 #define SCENE_TYPES_HPP
 
-#include <cstdint>
-
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <cstdint>
 #include <filesystem>
 #include <vector>
 
@@ -55,6 +54,8 @@ struct StartupInitialization {
         0;  ///< First IMU sample that wasn't used by initialization.
     std::size_t next_gps_index =
         0;  ///< First GPS sample that wasn't used by initialization.
+    std::int64_t utime_last_imu =
+        0;  ///< Timestamp of last IMU sample used by initialization.
 };
 
 #endif  // SCENE_TYPES_HPP
