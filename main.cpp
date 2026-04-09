@@ -25,13 +25,5 @@ int main() {
     std::optional<StartupInitialization> startup_initialization =
         ComputeStartupInitialization(loaded_scene.imu_samples, gps_samples);
 
-    // TO DO AFTER ALL OF THE ABOVE:
-    // - IMU propagation: predict attitude, velocity, position, and covariance
-    // from IMU data.
-    // - GPS update: apply 2D `(x,y)` position updates and compute innovation
-    // and NIS.
-    // - Replay/logging: run IMU-as-clock replay, apply due GPS updates, write
-    // the CSV log, and report xy RMSE.
-
     return 0;
 }
