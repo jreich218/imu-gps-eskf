@@ -1,13 +1,13 @@
-#include "initialization.hpp"
-#include "scene_types.hpp"
+#include <gtest/gtest.h>
 
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <cmath>
 #include <cstdint>
 #include <vector>
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
-#include <gtest/gtest.h>
+#include "initialization.hpp"
+#include "scene_types.hpp"
 
 namespace {
 
@@ -17,9 +17,8 @@ ImuSample MakeImuSample(std::int64_t utime,
     ImuSample imu_sample;
     imu_sample.utime = utime;
     imu_sample.rotation_rate = Eigen::Vector3d(0.0, 0.0, yaw_rate_z);
-    imu_sample.q_AI =
-        Eigen::Quaterniond(Eigen::AngleAxisd(q_ai_yaw_rad,
-                                             Eigen::Vector3d::UnitZ()));
+    imu_sample.q_AI = Eigen::Quaterniond(
+        Eigen::AngleAxisd(q_ai_yaw_rad, Eigen::Vector3d::UnitZ()));
     return imu_sample;
 }
 
@@ -50,15 +49,21 @@ Eigen::Vector2d CircleArcXy(double radius_m, double heading_rad) {
 TEST(ComputeStartupInitialization,
      IgnoresGpsBeforeFirstImuAndReadiesOnStableHeading) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0), MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0), MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0), MakeImuSample(600000, 0.0),
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(500000, 0.0),
+        MakeImuSample(600000, 0.0),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(0, -1.0, 0.0),      MakeGpsSample(100000, 0.0, 0.0),
-        MakeGpsSample(200000, 3.0, 0.0),  MakeGpsSample(300000, 6.0, 0.0),
-        MakeGpsSample(400000, 9.0, 0.0),  MakeGpsSample(500000, 12.0, 0.0),
+        MakeGpsSample(0, -1.0, 0.0),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 3.0, 0.0),
+        MakeGpsSample(300000, 6.0, 0.0),
+        MakeGpsSample(400000, 9.0, 0.0),
+        MakeGpsSample(500000, 12.0, 0.0),
         MakeGpsSample(600000, 15.0, 0.0),
     };
 
@@ -68,7 +73,7 @@ TEST(ComputeStartupInitialization,
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 5U);
     EXPECT_EQ(startup_initialization->next_gps_index, 6U);
-    EXPECT_EQ(startup_initialization->utime_last_imu, 500000);
+    EXPECT_EQ(startup_initialization->last_imu_utime, 500000);
     EXPECT_NEAR(startup_initialization->p0_G.x(), 12.0, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.z(), 0.0, 1e-9);
@@ -79,17 +84,24 @@ TEST(ComputeStartupInitialization,
     EXPECT_NEAR(startup_initialization->q0_GI.norm(), 1.0, 1e-12);
 }
 
-TEST(ComputeStartupInitialization, CarriesTheReadyStateToTheFirstLaterImuSample) {
+TEST(ComputeStartupInitialization,
+     CarriesTheReadyStateToTheFirstLaterImuSample) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0), MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0), MakeImuSample(400000, 0.0),
-        MakeImuSample(520000, 0.5), MakeImuSample(620000, 0.5),
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(520000, 0.5),
+        MakeImuSample(620000, 0.5),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0),  MakeGpsSample(200000, 3.0, 0.0),
-        MakeGpsSample(300000, 6.0, 0.0),  MakeGpsSample(400000, 9.0, 0.0),
-        MakeGpsSample(500000, 12.0, 0.0), MakeGpsSample(600000, 15.0, 0.0),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 3.0, 0.0),
+        MakeGpsSample(300000, 6.0, 0.0),
+        MakeGpsSample(400000, 9.0, 0.0),
+        MakeGpsSample(500000, 12.0, 0.0),
+        MakeGpsSample(600000, 15.0, 0.0),
     };
 
     const std::optional<StartupInitialization> startup_initialization =
@@ -98,7 +110,7 @@ TEST(ComputeStartupInitialization, CarriesTheReadyStateToTheFirstLaterImuSample)
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 5U);
     EXPECT_EQ(startup_initialization->next_gps_index, 5U);
-    EXPECT_EQ(startup_initialization->utime_last_imu, 520000);
+    EXPECT_EQ(startup_initialization->last_imu_utime, 520000);
     EXPECT_NEAR(startup_initialization->p0_G.x(), 12.6, 1e-9);
     EXPECT_NEAR(startup_initialization->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_initialization->v0_G.x(), 30.0, 1e-9);
@@ -109,16 +121,22 @@ TEST(ComputeStartupInitialization, CarriesTheReadyStateToTheFirstLaterImuSample)
 TEST(ComputeStartupInitialization,
      ReturnsNulloptWhenProjectedSeparationStaysBelowTheRequiredThreshold) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0), MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0), MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0), MakeImuSample(600000, 0.0),
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(500000, 0.0),
+        MakeImuSample(600000, 0.0),
         MakeImuSample(700000, 0.0),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0), MakeGpsSample(200000, 1.0, 0.0),
-        MakeGpsSample(300000, 2.0, 0.0), MakeGpsSample(400000, 3.0, 0.0),
-        MakeGpsSample(500000, 4.0, 0.0), MakeGpsSample(600000, 5.0, 0.0),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 1.0, 0.0),
+        MakeGpsSample(300000, 2.0, 0.0),
+        MakeGpsSample(400000, 3.0, 0.0),
+        MakeGpsSample(500000, 4.0, 0.0),
+        MakeGpsSample(600000, 5.0, 0.0),
         MakeGpsSample(700000, 6.0, 0.0),
     };
 
@@ -126,7 +144,8 @@ TEST(ComputeStartupInitialization,
         ComputeStartupInitialization(imu_samples, gps_samples).has_value());
 }
 
-TEST(ComputeStartupInitialization, RelaxesProjectedSeparationAfterEightyGpsPoints) {
+TEST(ComputeStartupInitialization,
+     RelaxesProjectedSeparationAfterEightyGpsPoints) {
     std::vector<ImuSample> imu_samples;
     std::vector<GpsSample> gps_samples;
     imu_samples.reserve(80);
@@ -152,25 +171,32 @@ TEST(ComputeStartupInitialization, RelaxesProjectedSeparationAfterEightyGpsPoint
     ASSERT_TRUE(startup_at_eighty.has_value());
     EXPECT_EQ(startup_at_eighty->next_imu_index, 80U);
     EXPECT_EQ(startup_at_eighty->next_gps_index, 80U);
-    EXPECT_EQ(startup_at_eighty->utime_last_imu, 8000000);
+    EXPECT_EQ(startup_at_eighty->last_imu_utime, 8000000);
     EXPECT_NEAR(startup_at_eighty->p0_G.x(), 7.9, 1e-9);
     EXPECT_NEAR(startup_at_eighty->p0_G.y(), 0.0, 1e-9);
     EXPECT_NEAR(startup_at_eighty->v0_G.norm(), 1.0, 1e-6);
     EXPECT_NEAR(YawFromQuaternion(startup_at_eighty->q0_GI), 0.0, 1e-9);
 }
 
-TEST(ComputeStartupInitialization, ReturnsNulloptWhenStartupNeverLooksTrustworthy) {
+TEST(ComputeStartupInitialization,
+     ReturnsNulloptWhenStartupNeverLooksTrustworthy) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0), MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0), MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0), MakeImuSample(600000, 0.0),
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(500000, 0.0),
+        MakeImuSample(600000, 0.0),
         MakeImuSample(700000, 0.0),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0), MakeGpsSample(200000, 1.0, 0.0),
-        MakeGpsSample(300000, 2.0, 2.0), MakeGpsSample(400000, 3.0, -2.0),
-        MakeGpsSample(500000, 4.0, 2.0), MakeGpsSample(600000, 5.0, -2.0),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 1.0, 0.0),
+        MakeGpsSample(300000, 2.0, 2.0),
+        MakeGpsSample(400000, 3.0, -2.0),
+        MakeGpsSample(500000, 4.0, 2.0),
+        MakeGpsSample(600000, 5.0, -2.0),
         MakeGpsSample(700000, 6.0, 2.0),
     };
 
@@ -181,16 +207,22 @@ TEST(ComputeStartupInitialization, ReturnsNulloptWhenStartupNeverLooksTrustworth
 TEST(ComputeStartupInitialization,
      UsesPrincipalDirectionWhenLineLikeHeadingIsStillWobbling) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0), MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0), MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0), MakeImuSample(600000, 0.0),
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(500000, 0.0),
+        MakeImuSample(600000, 0.0),
         MakeImuSample(700000, 0.0),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0),   MakeGpsSample(200000, 3.0, 1.8),
-        MakeGpsSample(300000, 6.0, -1.8),  MakeGpsSample(400000, 9.0, 1.8),
-        MakeGpsSample(500000, 12.0, -1.8), MakeGpsSample(600000, 15.0, 1.8),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 3.0, 1.8),
+        MakeGpsSample(300000, 6.0, -1.8),
+        MakeGpsSample(400000, 9.0, 1.8),
+        MakeGpsSample(500000, 12.0, -1.8),
+        MakeGpsSample(600000, 15.0, 1.8),
         MakeGpsSample(700000, 18.0, -1.8),
     };
 
@@ -211,9 +243,12 @@ TEST(ComputeStartupInitialization,
     const double yaw_rate_z = kHeadingStepRad / 0.1;
 
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, yaw_rate_z), MakeImuSample(200000, yaw_rate_z),
-        MakeImuSample(300000, yaw_rate_z), MakeImuSample(400000, yaw_rate_z),
-        MakeImuSample(500000, yaw_rate_z), MakeImuSample(600000, yaw_rate_z),
+        MakeImuSample(100000, yaw_rate_z),
+        MakeImuSample(200000, yaw_rate_z),
+        MakeImuSample(300000, yaw_rate_z),
+        MakeImuSample(400000, yaw_rate_z),
+        MakeImuSample(500000, yaw_rate_z),
+        MakeImuSample(600000, yaw_rate_z),
         MakeImuSample(700000, yaw_rate_z),
     };
 
@@ -228,8 +263,10 @@ TEST(ComputeStartupInitialization,
             xy += Eigen::Vector2d(0.0, -2.0);
         }
 
-        gps_samples.push_back(MakeGpsSample(
-            100000 + static_cast<std::int64_t>(index) * 100000, xy.x(), xy.y()));
+        gps_samples.push_back(
+            MakeGpsSample(100000 + static_cast<std::int64_t>(index) * 100000,
+                          xy.x(),
+                          xy.y()));
     }
 
     const std::optional<StartupInitialization> startup_initialization =
@@ -238,22 +275,28 @@ TEST(ComputeStartupInitialization,
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->next_imu_index, 6U);
     EXPECT_EQ(startup_initialization->next_gps_index, 6U);
-    EXPECT_EQ(startup_initialization->utime_last_imu, 600000);
+    EXPECT_EQ(startup_initialization->last_imu_utime, 600000);
     EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI), 0.56, 0.12);
     EXPECT_NEAR(startup_initialization->v0_G.head<2>().norm(), 20.8517, 0.1);
 }
 
 TEST(ComputeStartupInitialization, UsesHandoffImuOrientationToBuildQ0GI) {
     const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0, 0.3), MakeImuSample(200000, 0.0, 0.3),
-        MakeImuSample(300000, 0.0, 0.3), MakeImuSample(400000, 0.0, 0.3),
-        MakeImuSample(500000, 0.0, 0.3), MakeImuSample(600000, 0.0, 0.3),
+        MakeImuSample(100000, 0.0, 0.3),
+        MakeImuSample(200000, 0.0, 0.3),
+        MakeImuSample(300000, 0.0, 0.3),
+        MakeImuSample(400000, 0.0, 0.3),
+        MakeImuSample(500000, 0.0, 0.3),
+        MakeImuSample(600000, 0.0, 0.3),
     };
 
     const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0),  MakeGpsSample(200000, 3.0, 0.0),
-        MakeGpsSample(300000, 6.0, 0.0),  MakeGpsSample(400000, 9.0, 0.0),
-        MakeGpsSample(500000, 12.0, 0.0), MakeGpsSample(600000, 15.0, 0.0),
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 3.0, 0.0),
+        MakeGpsSample(300000, 6.0, 0.0),
+        MakeGpsSample(400000, 9.0, 0.0),
+        MakeGpsSample(500000, 12.0, 0.0),
+        MakeGpsSample(600000, 15.0, 0.0),
     };
 
     const std::optional<StartupInitialization> startup_initialization =

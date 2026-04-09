@@ -54,7 +54,7 @@ struct StartupInitialization {
         0;  ///< First IMU sample that wasn't used by initialization.
     std::size_t next_gps_index =
         0;  ///< First GPS sample that wasn't used by initialization.
-    std::int64_t utime_last_imu =
+    std::int64_t last_imu_utime =
         0;  ///< Timestamp of last IMU sample used by initialization.
 };
 

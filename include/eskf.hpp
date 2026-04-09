@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <atomic>
 
 #include "scene_types.hpp"
 
@@ -16,6 +17,11 @@ class Eskf {
         Eigen::Vector3d v_G{0.0, 0.0, 0.0};
         Eigen::Quaterniond q_GI{1.0, 0.0, 0.0, 0.0};
     };
+
+    NominalState x_;
+    Eigen::Matrix<double, 9, 9> P_;
+    std::atomic_int64_t last_imu_utime_ = 0;
+    bool initialized_ = false;
 };
 
 #endif  // ESKF_HPP

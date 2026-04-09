@@ -79,8 +79,8 @@ double ArcLengthFromChordAndTurn(double chord_m, double abs_turn_rad) {
 
 Eigen::Quaterniond QuaternionFromYaw(double yaw_rad) {
     const double half_yaw_rad = 0.5 * yaw_rad;
-    return Eigen::Quaterniond(std::cos(half_yaw_rad), 0.0, 0.0,
-                              std::sin(half_yaw_rad));
+    return Eigen::Quaterniond(
+        std::cos(half_yaw_rad), 0.0, 0.0, std::sin(half_yaw_rad));
 }
 
 Eigen::Quaterniond BuildGlobalOrientation(double yaw_rad,
@@ -190,11 +190,10 @@ Eigen::Vector2d PositionAt(const QuadraticPathFit& path_fit, double tau_s) {
     //
     // It is used both at the ready time itself (`tau = 0`) and, later, at the
     // start of the recent-speed window.
-    return Eigen::Vector2d(
-        path_fit.coeff_x.x() + path_fit.coeff_x.y() * tau_s +
-            path_fit.coeff_x.z() * tau_s * tau_s,
-        path_fit.coeff_y.x() + path_fit.coeff_y.y() * tau_s +
-            path_fit.coeff_y.z() * tau_s * tau_s);
+    return Eigen::Vector2d(path_fit.coeff_x.x() + path_fit.coeff_x.y() * tau_s +
+                               path_fit.coeff_x.z() * tau_s * tau_s,
+                           path_fit.coeff_y.x() + path_fit.coeff_y.y() * tau_s +
+                               path_fit.coeff_y.z() * tau_s * tau_s);
 }
 
 Eigen::Vector2d VelocityAt(const QuadraticPathFit& path_fit, double tau_s) {
@@ -205,8 +204,9 @@ Eigen::Vector2d VelocityAt(const QuadraticPathFit& path_fit, double tau_s) {
     // vector we get both:
     // - the local tangent heading
     // - the local endpoint speed
-    return Eigen::Vector2d(path_fit.coeff_x.y() + 2.0 * path_fit.coeff_x.z() * tau_s,
-                           path_fit.coeff_y.y() + 2.0 * path_fit.coeff_y.z() * tau_s);
+    return Eigen::Vector2d(
+        path_fit.coeff_x.y() + 2.0 * path_fit.coeff_x.z() * tau_s,
+        path_fit.coeff_y.y() + 2.0 * path_fit.coeff_y.z() * tau_s);
 }
 
 double PathLengthBetween(const QuadraticPathFit& path_fit,
@@ -227,8 +227,8 @@ double PathLengthBetween(const QuadraticPathFit& path_fit,
         return 0.0;
     }
 
-    const double h =
-        (tau_end_s - tau_start_s) / static_cast<double>(kPathLengthQuadratureSteps);
+    const double h = (tau_end_s - tau_start_s) /
+                     static_cast<double>(kPathLengthQuadratureSteps);
     double weighted_sum = 0.0;
     for (int step = 0; step <= kPathLengthQuadratureSteps; ++step) {
         const double tau_s = tau_start_s + static_cast<double>(step) * h;
@@ -256,8 +256,7 @@ double DeltaYawBetween(const std::vector<ImuSample>& imu_samples,
     // - carrying the ready yaw forward to the first IMU sample at or after the
     //   ready time
     if (end_utime < start_utime) {
-        throw std::runtime_error(
-            "Startup IMU interval must be nondecreasing.");
+        throw std::runtime_error("Startup IMU interval must be nondecreasing.");
     }
 
     double delta_yaw_rad = 0.0;
@@ -388,12 +387,12 @@ double ComputeTangentWeight(const std::vector<HeadingSample>& heading_samples) {
     const std::size_t first_recent_index =
         heading_samples.size() - kStabilityWindow;
     double max_error_rad = 0.0;
-    for (std::size_t index = first_recent_index;
-         index < heading_samples.size();
+    for (std::size_t index = first_recent_index; index < heading_samples.size();
          ++index) {
-        max_error_rad = std::max(
-            max_error_rad,
-            std::abs(AngleDiff(heading_samples[index].yaw_rad, latest_yaw_rad)));
+        max_error_rad =
+            std::max(max_error_rad,
+                     std::abs(AngleDiff(heading_samples[index].yaw_rad,
+                                        latest_yaw_rad)));
     }
 
     const double normalized_error =
@@ -408,16 +407,14 @@ double BlendYaw(double tangent_yaw_rad,
     // tangent-stability weight.
     //
     // Blend on the unit circle so wraparound at `+-pi` is handled correctly.
-    const double clamped_tangent_weight =
-        std::clamp(tangent_weight, 0.0, 1.0);
+    const double clamped_tangent_weight = std::clamp(tangent_weight, 0.0, 1.0);
     const double global_weight = 1.0 - clamped_tangent_weight;
     const Eigen::Vector2d blended =
         clamped_tangent_weight * UnitDirection(tangent_yaw_rad) +
         global_weight * UnitDirection(global_yaw_rad);
 
     if (blended.squaredNorm() <= 1e-12) {
-        return clamped_tangent_weight >= 0.5 ? tangent_yaw_rad
-                                             : global_yaw_rad;
+        return clamped_tangent_weight >= 0.5 ? tangent_yaw_rad : global_yaw_rad;
     }
 
     return std::atan2(blended.y(), blended.x());
@@ -500,8 +497,7 @@ double BlendSpeed(double local_speed_mps,
     //
     // Reusing the same weight keeps the heading and speed confidence decisions
     // aligned.
-    const double clamped_tangent_weight =
-        std::clamp(tangent_weight, 0.0, 1.0);
+    const double clamped_tangent_weight = std::clamp(tangent_weight, 0.0, 1.0);
     return clamped_tangent_weight * local_speed_mps +
            (1.0 - clamped_tangent_weight) * global_speed_mps;
 }
@@ -567,24 +563,26 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
     }
 
     const ImuSample& handoff_imu_sample = imu_samples[handoff_imu_index];
-    const double dt_gap_s =
-        static_cast<double>(handoff_imu_sample.utime - ready_estimate.ready_utime) *
-        kSecPerUsec;
+    const double dt_gap_s = static_cast<double>(handoff_imu_sample.utime -
+                                                ready_estimate.ready_utime) *
+                            kSecPerUsec;
     const double carried_yaw_rad = WrapAngle(
         ready_estimate.yaw_rad + DeltaYawBetween(imu_samples,
                                                  ready_estimate.ready_utime,
                                                  handoff_imu_sample.utime));
 
     StartupInitialization startup_initialization;
-    startup_initialization.p0_G = Eigen::Vector3d(
-        ready_estimate.position_xy.x() + ready_estimate.velocity_xy.x() * dt_gap_s,
-        ready_estimate.position_xy.y() + ready_estimate.velocity_xy.y() * dt_gap_s,
-        0.0);
+    startup_initialization.p0_G =
+        Eigen::Vector3d(ready_estimate.position_xy.x() +
+                            ready_estimate.velocity_xy.x() * dt_gap_s,
+                        ready_estimate.position_xy.y() +
+                            ready_estimate.velocity_xy.y() * dt_gap_s,
+                        0.0);
     startup_initialization.v0_G = Eigen::Vector3d(
         ready_estimate.velocity_xy.x(), ready_estimate.velocity_xy.y(), 0.0);
     startup_initialization.q0_GI =
         BuildGlobalOrientation(carried_yaw_rad, handoff_imu_sample);
-    startup_initialization.utime_last_imu = handoff_imu_sample.utime;
+    startup_initialization.last_imu_utime = handoff_imu_sample.utime;
     startup_initialization.next_imu_index = handoff_imu_index + 1;
     startup_initialization.next_gps_index = ready_estimate.next_gps_index;
     return startup_initialization;
@@ -686,9 +684,11 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
             RecentSpeedWindowStartUtime(startup_begin_utime, ready_utime);
         const double local_speed_mps =
             ComputeLocalSpeed(path_fit, recent_start_utime);
-        const double global_speed_mps =
-            ComputeGlobalSpeed(path_fit, principal_direction, imu_samples,
-                               recent_start_utime, global_yaw_rad);
+        const double global_speed_mps = ComputeGlobalSpeed(path_fit,
+                                                           principal_direction,
+                                                           imu_samples,
+                                                           recent_start_utime,
+                                                           global_yaw_rad);
 
         // 12. Blend the recent local and global speed estimates with the same
         //     weight already used for the heading blend.
@@ -697,9 +697,8 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
 
         // 13. As soon as one GPS window looks trustworthy, package the ready
         //     2D startup state and stop extending the window any further.
-        const std::optional<ReadyEstimate2D> ready_estimate =
-            FormReadyEstimate(path_fit, blended_speed_mps, blended_yaw_rad,
-                              gps_end_index + 1);
+        const std::optional<ReadyEstimate2D> ready_estimate = FormReadyEstimate(
+            path_fit, blended_speed_mps, blended_yaw_rad, gps_end_index + 1);
         if (!ready_estimate.has_value()) {
             continue;
         }
