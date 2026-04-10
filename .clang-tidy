@@ -44,8 +44,24 @@ Checks: >
   -readability-magic-numbers,
   -readability-qualified-auto,
   -readability-redundant-access-specifiers
-HeaderFilterRegex: '(^|.*/)(include|src)/'
+
+HeaderFilterRegex: '(^|.*/)(include|src|tests)/'
 FormatStyle: file
+
+# Philosophy:
+#   * ordinary software identifiers -> lower_snake_case
+#   * class data members         -> lower_snake_case_
+#   * estimator math exceptions  -> canonical KF/ESKF symbols and frame-aware names
+#
+# Accepted scientific identifiers include examples such as:
+#   P, P_prior, P_error_, Q_imu_, R_gps_, H_gps, K, S, Phi,
+#   q_GI, R_GI, p_G, v_G, g_G, p0_G, q0_GI, omega_A, x_axis_A
+#
+# Deliberately not blessed:
+#   X_curr, Y_ekf, arbitrary UpperCamel variables
+#
+# This keeps the codebase readable to C++ engineers while preserving the notation
+# experts expect in Kalman filtering and frame-aware geometry.
 CheckOptions:
   readability-identifier-naming.NamespaceCase: lower_case
   readability-identifier-naming.ClassCase: CamelCase
@@ -60,16 +76,18 @@ CheckOptions:
   readability-identifier-naming.GlobalFunctionCase: CamelCase
   readability-identifier-naming.GlobalFunctionIgnoredRegexp: '^(main|wmain)$'
   readability-identifier-naming.MethodCase: CamelCase
+
   readability-identifier-naming.VariableCase: lower_case
   readability-identifier-naming.ParameterCase: lower_case
   readability-identifier-naming.PointerParameterCase: lower_case
   readability-identifier-naming.ConstantPointerParameterCase: lower_case
+
   readability-identifier-naming.PrivateMemberCase: lower_case
   readability-identifier-naming.PrivateMemberSuffix: _
   readability-identifier-naming.ProtectedMemberCase: lower_case
   readability-identifier-naming.ProtectedMemberSuffix: _
   readability-identifier-naming.PublicMemberCase: lower_case
-  readability-identifier-naming.PublicMemberIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'
+
   readability-identifier-naming.GlobalConstantCase: CamelCase
   readability-identifier-naming.GlobalConstantPrefix: k
   readability-identifier-naming.GlobalConstexprVariableCase: CamelCase
@@ -87,5 +105,12 @@ CheckOptions:
   readability-identifier-naming.ScopedEnumConstantCase: CamelCase
   readability-identifier-naming.ScopedEnumConstantPrefix: k
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
-  readability-identifier-naming.VariableIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'
-  readability-identifier-naming.ParameterIgnoredRegexp: '^[A-Za-z][A-Za-z0-9]*_[A-Z]{1,2}$'
+
+  # Canonical scientific/KF/ESKF escape hatch:
+  #   * frame-aware names like q_GI, p0_G, omega_A, x_axis_A, R_GI
+  #   * filter symbols like P, Q_d, R_gps, H_gps, K, S, Phi, J_r
+  readability-identifier-naming.VariableIgnoredRegexp: '^(?:(?:[a-z][a-z0-9]*)(?:_[a-z0-9]+)*(?:_[A-Z]{1,4})+|(?:R|T)(?:_[A-Z]{1,4})+|(?:P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)(?:[0-9]+)?(?:_[a-z0-9]+)*)$'
+  readability-identifier-naming.ParameterIgnoredRegexp: '^(?:(?:[a-z][a-z0-9]*)(?:_[a-z0-9]+)*(?:_[A-Z]{1,4})+|(?:R|T)(?:_[A-Z]{1,4})+|(?:P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)(?:[0-9]+)?(?:_[a-z0-9]+)*)$'
+  readability-identifier-naming.PublicMemberIgnoredRegexp: '^(?:(?:[a-z][a-z0-9]*)(?:_[a-z0-9]+)*(?:_[A-Z]{1,4})+|(?:R|T)(?:_[A-Z]{1,4})+|(?:P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)(?:[0-9]+)?(?:_[a-z0-9]+)*)$'
+  readability-identifier-naming.ProtectedMemberIgnoredRegexp: '^(?:(?:[a-z][a-z0-9]*)(?:_[a-z0-9]+)*(?:_[A-Z]{1,4})+|(?:R|T)(?:_[A-Z]{1,4})+|(?:P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)(?:[0-9]+)?(?:_[a-z0-9]+)*)_$'
+  readability-identifier-naming.PrivateMemberIgnoredRegexp: '^(?:(?:[a-z][a-z0-9]*)(?:_[a-z0-9]+)*(?:_[A-Z]{1,4})+|(?:R|T)(?:_[A-Z]{1,4})+|(?:P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)(?:[0-9]+)?(?:_[a-z0-9]+)*)_$' 

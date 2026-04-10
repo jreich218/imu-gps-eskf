@@ -3,7 +3,6 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <atomic>
 
 #include "scene_types.hpp"
 
@@ -19,7 +18,7 @@ class Eskf {
     };
 
     NominalState x_;
-    Eigen::Matrix<double, 9, 9> P_;
+    Eigen::Matrix<double, 9, 9> P_ = Eigen::Matrix<double, 9, 9>::Zero();
     std::int64_t last_imu_utime_ = 0;
     bool initialized_ = false;
 };
