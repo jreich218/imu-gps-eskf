@@ -1,0 +1,13 @@
+1. Review the sequence of requirements/preferences I mention throughout the prompts of this chat on how you should function in this chat. Read them in sequential order from earliest prompt to most recent prompt. Where there are conflicts, honor the more recent requirement/preference. Tell me what the current requirements/preferences you should honor are. To find the whole set of prompt...
+```
+Look up the JSONL file that has this chat's full history. To find it search recursively from `/home/dfw/.codex/sessions` using the ID associated with this chat (which is `019d7e88-a9e7-7d4e-ad1d-a4305b34a972`) to locate the JSONL file containing said ID within its file name.
+```
+2. Reread **ALL** of the C++ code including the unit tests in `~/dev/imu-gps-eskf-version-being-rewritten` to prioritize a fresh view of what the full app we are writing needs to be able to do. Note: Even though there is C++ code in `recent_results`, please ignore it because it is irrelevant to us and has no impact on the app at this point.
+3. Reread **ALL** of the C++ code including the unit tests in this repo to be certain you know about all changes I've made since the last time you looked at the code in this repo **AND** to prioritize a fresh view of what has been done here and is left to do. Tell me what is left to do in this repo before we are done recreating all the functionality in `~/dev/imu-gps-eskf-version-being-rewritten`.
+
+Deliverable: Your forthcoming prompt should
+i) Confirm you did **ALL** the reading requested in #1, #2, and #3 above.
+ii) Tell me the current requirements/preferences you should honor based on your review of **ALL** prompts from this converstaion (favoring most recent instruction when more than one instruction is in coflict)
+iii) Tell me what is left to do in this repo before we are done recreating all the functionality in `~/dev/imu-gps-eskf-version-being-rewritten`.
+iv) Keep i through iii to three or four sentences without loosing information. Aim for high information density rather than dropping content that's relevant.
+
