@@ -28,7 +28,7 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
 
     P_(6, 6) = DegToRad(2.0) * DegToRad(2.0);
     P_(7, 7) = DegToRad(2.0) * DegToRad(2.0);
-    P_(8, 8) = DegToRad(10.0) * DegToRad(2.0);
+    P_(8, 8) = DegToRad(10.0) * DegToRad(10.0);
 
     initialized_ = true;
 }
