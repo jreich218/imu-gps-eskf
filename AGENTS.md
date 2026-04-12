@@ -12,4 +12,8 @@ Please read the project docs at `/home/dfw/dev/quarto_site/docs`, the `README.md
 4. This version will *not* necessarily do every single internal detail in the same way the old version does (although this version is free to do things the same way).
 5. This version will *not* necessarily use the exact same names the old version uses (although this version is free to name things the same way).
 
+## Important
+
+Read `~/important.md` and confirm it makes sense.
+
 Regardless of what my first prompt happens to be, please briefly include in your first answer a summary of both the reading you did and your understanding of what I discussed above.
