@@ -1,4 +1,5 @@
 .context_refresh
+.context/
 .DS_Store
 Thumbs.db
 
