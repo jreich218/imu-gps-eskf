@@ -4,14 +4,17 @@
 
 #include "scene_types.hpp"
 
+namespace {
+constexpr double DegToRad(double deg) {
+    return deg * 3.14159265358979323846 / 180.0;
+}
+}  // namespace
+
 void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     x_.p_G = startup_initialization.p0_G;
     x_.v_G = startup_initialization.v0_G;
     x_.q_GI = startup_initialization.q0_GI.normalized();
     last_imu_utime_ = startup_initialization.last_imu_utime;
-
-    constexpr double kPi = 3.14159265358979323846;
-    constexpr double kDegToRad = kPi / 180.0;
 
     P_.setZero();
 
@@ -23,9 +26,9 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     P_(4, 4) = 4.0;
     P_(5, 5) = 0.01;
 
-    P_(6, 6) = std::pow(2.0 * kDegToRad, 2);
-    P_(7, 7) = std::pow(2.0 * kDegToRad, 2);
-    P_(8, 8) = std::pow(10.0 * kDegToRad, 2);
+    P_(6, 6) = DegToRad(2.0) * DegToRad(2.0);
+    P_(7, 7) = DegToRad(2.0) * DegToRad(2.0);
+    P_(8, 8) = DegToRad(10.0) * DegToRad(2.0);
 
     initialized_ = true;
 }
