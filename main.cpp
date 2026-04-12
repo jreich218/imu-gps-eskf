@@ -27,6 +27,7 @@ int main() {
         // Initialize filter covariance
         Eskf eskf;
         eskf.Initialize(*startup_initialization);
+        // Loop over estimator runtime here goes here.
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";

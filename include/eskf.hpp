@@ -9,6 +9,7 @@
 class Eskf {
    public:
     void Initialize(const StartupInitialization& startup_initialization);
+    void Predict(const ImuSample& imu_sample);
 
    private:
     struct NominalState {

@@ -32,3 +32,5 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
 
     initialized_ = true;
 }
+
+void Eskf::Predict(const ImuSample& imu_sample) {}
