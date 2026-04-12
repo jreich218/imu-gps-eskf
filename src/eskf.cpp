@@ -33,4 +33,32 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     initialized_ = true;
 }
 
-void Eskf::Predict(const ImuSample& imu_sample) {}
+void Eskf::Predict(const ImuSample& imu_sample) {
+    // 1. Refuse to run if the filter has not been initialized yet.
+
+    // 2. Compute `dt` from this IMU timestamp and `last_imu_utime_`, then
+    //    update `last_imu_utime_`.
+
+    // 3. Integrate the measured angular velocity to advance the nominal
+    //    attitude `q_GI`.
+
+    // 4. Use the IMU's `q_AI` to express gravity in frame `I`, then combine
+    //    that with the measured specific force to recover linear
+    //    acceleration in `I`.
+
+    // 5. Rotate that acceleration into frame `G`, then propagate nominal
+    //    position `p_G` and velocity `v_G`.
+
+    // 6. Build the linearized state-transition matrix `F` for the
+    //    position-velocity-attitude error state over this IMU step.
+
+    // 7. Build the noise mapping `G` and process-noise covariance `Q` from
+    //    the accelerometer and gyro noise assumptions.
+
+    // 8. Propagate the covariance with `P_ = F * P_ * F.transpose() + Q`.
+
+    // 9. Re-symmetrize the covariance and clamp tiny negative diagonal terms
+    //    caused by numerical roundoff.
+
+    (void)imu_sample;
+}
