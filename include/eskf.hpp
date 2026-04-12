@@ -6,9 +6,21 @@
 
 #include "scene_types.hpp"
 
+/// Error-state Kalman filter over position, velocity, and attitude.
 class Eskf {
    public:
+    /**
+     * @brief Initialize the filter from the startup initialization.
+     *
+     * @param startup_initialization Startup state used to begin filtering.
+     */
     void Initialize(const StartupInitialization& startup_initialization);
+
+    /**
+     * @brief Propagate the filter with one IMU sample.
+     *
+     * @param imu_sample IMU sample used for propagation.
+     */
     void Predict(const ImuSample& imu_sample);
 
    private:
