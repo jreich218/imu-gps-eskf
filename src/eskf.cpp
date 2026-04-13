@@ -34,13 +34,17 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
 }
 
 void Eskf::Predict(const ImuSample& imu_sample) {
-    // 1. Refuse to run if the filter has not been initialized yet.
+    if (!initialized_) {
+        throw std::runtime_error("Eskf::Predict: filter is not initialized.");
+    }
+    std::int64_t dt_us = imu_sample.utime - last_imu_utime_;
+    const double dt_s = static_cast<double>(dt_us) * 1e-6;
+    last_imu_utime_ = imu_sample.utime;
 
-    // 2. Compute `dt` from this IMU timestamp and `last_imu_utime_`, then
-    //    update `last_imu_utime_`.
-
-    // 3. Integrate the measured angular velocity to advance the nominal
-    //    attitude `q_GI`.
+    // Integrate the measured angular velocity to advance the nominal attitude
+    // `q_GI`.
+    const Eigen::Vector3d omega_I = imu_sample.rotation_rate;
+    const Eigen::Vector3d dtheta_I = omega_I * dt_s;
 
     // 4. Use the IMU's `q_AI` to express gravity in frame `I`, then combine
     //    that with the measured specific force to recover linear
