@@ -45,7 +45,7 @@ void Eskf::Predict(const ImuSample& imu_sample) {
     // `q_GI`.
     const Eigen::Vector3d omega_I = imu_sample.rotation_rate;
     const Eigen::Vector3d dtheta_I = omega_I * dt_s;
-
+    (void)dtheta_I;
     // 4. Use the IMU's `q_AI` to express gravity in frame `I`, then combine
     //    that with the measured specific force to recover linear
     //    acceleration in `I`.

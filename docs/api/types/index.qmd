@@ -6,21 +6,22 @@ body-classes: "cpp-api-page cpp-api-types-page"
 
 | Kind | Name | Description |
 | --- | --- | --- |
-| struct | [`SceneInputs`](#scene-inputs) | Selected pose and IMU input paths. |
-| struct | [`PoseSample`](#pose-sample) | One pose sample from the pose stream. |
-| struct | [`ImuSample`](#imu-sample) | One IMU sample from the IMU stream. |
-| struct | [`LoadedScene`](#loaded-scene) | Loaded pose and IMU streams. |
-| struct | [`GpsSample`](#gps-sample) | One GPS-like sample. |
+| struct | [`SceneInputs`](#scene-inputs) | Selected pose and IMU input file paths. |
+| struct | [`PoseSample`](#pose-sample) | One sample from the reference pose stream. |
+| struct | [`ImuSample`](#imu-sample) | One sample from the input IMU stream. |
+| struct | [`LoadedScene`](#loaded-scene) | Loaded reference-pose and IMU streams. |
+| struct | [`GpsSample`](#gps-sample) | One synthetic 2D GPS sample. |
 | struct | [`StartupInitialization`](#startup-initialization) | Initialization data required to start the filter. |
+| class | [`Eskf`](#eskf) | Error-state Kalman filter over position, velocity, and attitude. |
 
 ## `SceneInputs` {#scene-inputs}
 
-Selected pose and IMU input paths.
+Selected pose and IMU input file paths.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L10">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L11">source</a></div>
 
 ```cpp
 struct SceneInputs
@@ -34,12 +35,12 @@ struct SceneInputs
 
 ## `PoseSample` {#pose-sample}
 
-One pose sample from the pose stream.
+One sample from the reference pose stream.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L16">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L17">source</a></div>
 
 ```cpp
 struct PoseSample
@@ -48,19 +49,19 @@ struct PoseSample
 
 **Fields**
 
-- `utime`: Timestamp in microseconds.
-- `pos`: Global position in meters.
-- `orientation`: Pose orientation.
-- `vel`: Velocity sample.
+- `utime`: Timestamp in microseconds as std::int64_t.
+- `pos`: Reference global position in meters.
+- `orientation`: Reference orientation quaternion in [w, x, y, z].
+- `vel`: Reference ego-frame velocity sample in m/s.
 
 ## `ImuSample` {#imu-sample}
 
-One IMU sample from the IMU stream.
+One sample from the input IMU stream.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L24">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L27">source</a></div>
 
 ```cpp
 struct ImuSample
@@ -69,19 +70,19 @@ struct ImuSample
 
 **Fields**
 
-- `utime`: Timestamp in microseconds.
-- `specific_force`: Specific force in frame I.
-- `rotation_rate`: Angular velocity in frame I.
-- `q_AI`: IMU orientation in [w, x, y, z].
+- `utime`: Timestamp in microseconds as std::int64_t.
+- `specific_force`: Measured specific force in frame I.
+- `rotation_rate`: Measured angular velocity in frame I.
+- `q_AI`: Quaternion from frame I to gravity-aligned frame A in [w, x, y, z].
 
 ## `LoadedScene` {#loaded-scene}
 
-Loaded pose and IMU streams.
+Loaded reference-pose and IMU streams.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L35">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L41">source</a></div>
 
 ```cpp
 struct LoadedScene
@@ -95,12 +96,12 @@ struct LoadedScene
 
 ## `GpsSample` {#gps-sample}
 
-One GPS-like sample.
+One synthetic 2D GPS sample.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L41">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L47">source</a></div>
 
 ```cpp
 struct GpsSample
@@ -109,8 +110,8 @@ struct GpsSample
 
 **Fields**
 
-- `utime`: Timestamp in microseconds.
-- `xy`: Horizontal position in meters.
+- `utime`: Timestamp in microseconds as std::int64_t.
+- `xy`: Measured horizontal position in meters.
 
 ## `StartupInitialization` {#startup-initialization}
 
@@ -119,7 +120,7 @@ Initialization data required to start the filter.
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L47">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L53">source</a></div>
 
 ```cpp
 struct StartupInitialization
@@ -130,6 +131,55 @@ struct StartupInitialization
 
 - `v0_G`: Initial velocity in frame G.
 - `p0_G`: Initial position in frame G.
-- `q0_GI`: Initial attitude from I to G.
-- `next_imu_index`: First IMU sample that wasn't used by initialization.
-- `next_gps_index`: First GPS sample that wasn't used by initialization.
+- `q0_GI`: Initial attitude quaternion from I to G.
+- `next_imu_index`: First IMU sample not used by initialization.
+- `next_gps_index`: First GPS sample not used by initialization.
+- `last_imu_utime`: Timestamp of the last IMU sample used by initialization.
+
+## `Eskf` {#eskf}
+
+Error-state Kalman filter over position, velocity, and attitude.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L10">source</a></div>
+
+```cpp
+class Eskf
+```
+:::
+
+### Methods
+
+#### `Initialize`
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L17">source</a></div>
+
+```cpp
+void Initialize(const StartupInitialization& startup_initialization);
+```
+:::
+
+Initialize the filter from the startup initialization.
+
+##### Inputs
+
+- `startup_initialization`: Startup state used to begin filtering.
+
+#### `Predict`
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L24">source</a></div>
+
+```cpp
+void Predict(const ImuSample& imu_sample);
+```
+:::
+
+Propagate the filter with one IMU sample.
+
+##### Inputs
+
+- `imu_sample`: IMU sample used for propagation.
