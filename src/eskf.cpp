@@ -1,10 +1,29 @@
 #include "eskf.hpp"
 
+#include <Eigen/Geometry>
 #include <cmath>
 
 #include "scene_types.hpp"
 
 namespace {
+
+Eigen::Quaterniond RotVecToQuat(const Eigen::Vector3d& phi) {
+    double theta = phi.norm();
+    Eigen::Quaterniond dq;
+
+    if (theta < 1e-8) {
+        dq.w() = 1.0;
+        dq.vec() = 0.5 * phi;
+        dq.normalize();
+    } else {
+        double half = 0.5 * theta;
+        dq.w() = std::cos(half);
+        dq.vec() = (std::sin(half) / theta) * phi;
+    }
+
+    return dq;
+}
+
 constexpr double DegToRad(double deg) {
     return deg * 3.14159265358979323846 / 180.0;
 }
@@ -45,7 +64,9 @@ void Eskf::Predict(const ImuSample& imu_sample) {
     // `q_GI`.
     const Eigen::Vector3d omega_I = imu_sample.rotation_rate;
     const Eigen::Vector3d dtheta_I = omega_I * dt_s;
-    (void)dtheta_I;
+    Eigen::Quaterniond dq_IkIkp1 = RotVecToQuat(dtheta_I);
+    x_.q_GI = (x_.q_GI * dq_IkIkp1).normalized();
+
     // 4. Use the IMU's `q_AI` to express gravity in frame `I`, then combine
     //    that with the measured specific force to recover linear
     //    acceleration in `I`.
