@@ -80,16 +80,25 @@ void Eskf::Predict(const ImuSample& imu_sample) {
                          0.5 * linear_acc_G * dt_s * dt_s;
     nominal_state_.v_G = nominal_state_.v_G + linear_acc_G * dt_s;
 
-    // Build the linearized state-transition matrix `F` for the
+    // clang-format off
+
+    // 1. Build the linearized state-transition matrix `F` for the
     // position-velocity-attitude error state over this IMU step.
 
-    // Build the noise mapping `G` and process-noise covariance `Q` from the
-    // accelerometer and gyro noise assumptions.
+    // 2. Build the noise mapping `G` from accelerometer/gyro noise into the
+    // 9D error state, and build the raw IMU noise covariance `Q_covariance`:
 
-    // Propagate the covariance with `P_ = F * P_ * F.transpose() + Q`.
+    /***
+
+    G   = mapping from [accel_noise, gyro_noise] to [pos_error, vel_error, attitude_error]
+    Q_covariance  = covariance of raw IMU noise
+
+     */
+
+    // 3. Propagate the covariance with `P_ = F * P_ * F.transpose() + G * Q_covariance * G.transpose()`.
 
     // Re-symmetrize the covariance and clamp tiny negative diagonal terms
     // caused by numerical roundoff.
 
-    (void)imu_sample;
+    // clang-format on
 }
