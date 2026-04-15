@@ -109,8 +109,8 @@ CheckOptions:
   # Canonical scientific/KF/ESKF escape hatch:
   #   * frame-aware names like q_GI, p0_G, omega_A, x_axis_A, R_GI
   #   * filter symbols like P, Q_d, R_gps, H_gps, K, S, Phi, J_r
-  readability-identifier-naming.VariableIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_[A-Z]{1,4})+|(R|T)(_[A-Z]{1,4})+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
-  readability-identifier-naming.ParameterIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_[A-Z]{1,4})+|(R|T)(_[A-Z]{1,4})+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
-  readability-identifier-naming.PublicMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_[A-Z]{1,4})+|(R|T)(_[A-Z]{1,4})+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
-  readability-identifier-naming.ProtectedMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_[A-Z]{1,4})+|(R|T)(_[A-Z]{1,4})+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)_$'
-  readability-identifier-naming.PrivateMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_[A-Z]{1,4})+|(R|T)(_[A-Z]{1,4})+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)_$' 
+  readability-identifier-naming.VariableIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(R|T)(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
+  readability-identifier-naming.ParameterIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(R|T)(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
+  readability-identifier-naming.PublicMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(R|T)(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)$'
+  readability-identifier-naming.ProtectedMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(R|T)(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)_$'
+  readability-identifier-naming.PrivateMemberIgnoredRegexp: '^(([a-z][a-z0-9]*)(_[a-z0-9]+)*(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(R|T)(_(([A-Z]{1,4}(k|kp[0-9]+|km[0-9]+)?)+))+|(P|Q|R|S|F|G|H|I|K|A|B|C|L|M|N|T|U|W|Phi|J|Jr|Jl|Ji|Jx|Jw)([0-9]+)?(_[a-z0-9]+)*)_$'
