@@ -2,8 +2,12 @@
 
 #include <Eigen/Geometry>
 #include <cmath>
+#include <sstream>
 
 namespace {
+
+constexpr double kCovarianceDiagonalEpsilon = 1e-12;
+constexpr double kCovarianceDiagonalNegativeTolerance = 1e-9;
 
 Eigen::Quaterniond RotVecToQuat(const Eigen::Vector3d& phi) {
     double theta = phi.norm();
@@ -24,6 +28,29 @@ Eigen::Quaterniond RotVecToQuat(const Eigen::Vector3d& phi) {
 
 constexpr double DegToRad(double deg) {
     return deg * 3.14159265358979323846 / 180.0;
+}
+
+void SymmetrizeAndClampCovariance(
+    Eigen::Matrix<double, 9, 9>& covariance_matrix) {
+    covariance_matrix =
+        0.5 * (covariance_matrix + covariance_matrix.transpose());
+
+    for (int i = 0; i < covariance_matrix.rows(); ++i) {
+        const double covariance_diagonal = covariance_matrix(i, i);
+        if (covariance_diagonal < 0.0) {
+            if (covariance_diagonal >=
+                -kCovarianceDiagonalNegativeTolerance) {
+                covariance_matrix(i, i) = kCovarianceDiagonalEpsilon;
+            } else {
+                std::ostringstream error_message;
+                error_message
+                    << "Eskf: covariance diagonal became significantly "
+                       "negative at i="
+                    << i << " (value=" << covariance_diagonal << ")";
+                throw std::runtime_error(error_message.str());
+            }
+        }
+    }
 }
 }  // namespace
 
@@ -117,12 +144,5 @@ void Eskf::Predict(const ImuSample& imu_sample) {
         G * imu_noise_covariance * G.transpose();
 
     P_ = F * P_ * F.transpose() + process_noise_covariance;
-    P_ = 0.5 * (P_ + P_.transpose());
-
-    constexpr double kTinyNegativeDiagonal = 1e-12;
-    for (int i = 0; i < P_.rows(); ++i) {
-        if (P_(i, i) < 0.0 && P_(i, i) > -kTinyNegativeDiagonal) {
-            P_(i, i) = 0.0;
-        }
-    }
+    SymmetrizeAndClampCovariance(P_);
 }
