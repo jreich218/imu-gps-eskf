@@ -78,22 +78,51 @@ void Eskf::Predict(const ImuSample& imu_sample) {
                          0.5 * linear_acc_G * dt_s * dt_s;
     nominal_state_.v_G = nominal_state_.v_G + linear_acc_G * dt_s;
 
-    // 1. Build the linearized state-transition matrix `F` for the
-    // position-velocity-attitude error state over this IMU step.
+    // Covariance update
+    const auto skew_symmetric = [](const Eigen::Vector3d& v) {
+        Eigen::Matrix3d skew;
+        skew << 0.0, -v.z(), v.y(), v.z(), 0.0, -v.x(), -v.y(), v.x(), 0.0;
+        return skew;
+    };
 
-    // 2. Build the noise mapping `G` from raw IMU noise into the
-    // 9D error state. G = mapping from [accel_noise, gyro_noise] to [pos_error,
-    // vel_error, attitude_error].
+    const Eigen::Matrix3d I3 = Eigen::Matrix3d::Identity();
+    const Eigen::Matrix3d R_GI = nominal_state_.q_GI.toRotationMatrix();
+    const Eigen::Matrix3d linear_acc_I_cross = skew_symmetric(linear_acc_I);
+    const Eigen::Matrix3d omega_I_cross = skew_symmetric(omega_I);
 
-    // 3. Build the raw IMU noise covariance `imu_noise_covariance` for
-    // `[accel_noise, gyro_noise]`.
+    Eigen::Matrix<double, 9, 9> F = Eigen::Matrix<double, 9, 9>::Zero();
+    F.block<3, 3>(0, 0) = I3;
+    F.block<3, 3>(0, 3) = I3 * dt_s;
+    F.block<3, 3>(0, 6) = -0.5 * R_GI * linear_acc_I_cross * dt_s * dt_s;
+    F.block<3, 3>(3, 3) = I3;
+    F.block<3, 3>(3, 6) = -R_GI * linear_acc_I_cross * dt_s;
+    F.block<3, 3>(6, 6) = I3 - omega_I_cross * dt_s;
 
-    // 4. Compute the process noise covariance:
-    // `process_noise_covariance = G * imu_noise_covariance * G.transpose();`
+    Eigen::Matrix<double, 9, 6> G = Eigen::Matrix<double, 9, 6>::Zero();
+    G.block<3, 3>(0, 0) = 0.5 * R_GI * dt_s * dt_s;
+    G.block<3, 3>(3, 0) = R_GI * dt_s;
+    G.block<3, 3>(6, 3) = I3 * dt_s;
 
-    // 5. Propagate the covariance with `P_ = F * P_ * F.transpose() +
-    // process_noise_covariance`.
+    constexpr double kAccelNoiseStd = 0.5;
+    constexpr double kGyroNoiseStd = 0.05;
 
-    // 6. Re-symmetrize the covariance and clamp tiny negative diagonal terms
-    // caused by numerical roundoff.
+    Eigen::Matrix<double, 6, 6> imu_noise_covariance =
+        Eigen::Matrix<double, 6, 6>::Zero();
+    imu_noise_covariance.block<3, 3>(0, 0) =
+        kAccelNoiseStd * kAccelNoiseStd * I3;
+    imu_noise_covariance.block<3, 3>(3, 3) =
+        kGyroNoiseStd * kGyroNoiseStd * I3;
+
+    const Eigen::Matrix<double, 9, 9> process_noise_covariance =
+        G * imu_noise_covariance * G.transpose();
+
+    P_ = F * P_ * F.transpose() + process_noise_covariance;
+    P_ = 0.5 * (P_ + P_.transpose());
+
+    constexpr double kTinyNegativeDiagonal = 1e-12;
+    for (int i = 0; i < P_.rows(); ++i) {
+        if (P_(i, i) < 0.0 && P_(i, i) > -kTinyNegativeDiagonal) {
+            P_(i, i) = 0.0;
+        }
+    }
 }
