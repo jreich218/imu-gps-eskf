@@ -25,21 +25,17 @@ struct PoseSample {
 };
 
 /// One sample from the input IMU stream.
-///
-/// In Eskf::Predict, this sample is treated as the current IMU sample k. The
-/// stored filter state before the Predict call is at the previous IMU sample
-/// k-1, and the Predict call propagates that state from k-1 to k.
 struct ImuSample {
-    std::int64_t utime = 0;  ///< Current IMU timestamp t_k in microseconds.
+    std::int64_t utime = 0;  ///< Timestamp in microseconds.
     Eigen::Vector3d specific_force{
-        0.0, 0.0, 0.0};  ///< Measured specific force in current frame I_k.
+        0.0, 0.0, 0.0};  ///< Measured specific force in frame I.
     Eigen::Vector3d rotation_rate{
-        0.0, 0.0, 0.0};  ///< Measured angular velocity in current frame I_k.
+        0.0, 0.0, 0.0};  ///< Measured angular velocity in frame I.
     Eigen::Quaterniond q_AI{
         1.0,
         0.0,
         0.0,
-        0.0};  ///< Quaternion from current frame I_k to gravity-aligned frame A.
+        0.0};  ///< Quaternion from frame I to gravity-aligned frame A.
 };
 
 /// Loaded reference-pose and IMU streams.
