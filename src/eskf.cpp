@@ -9,6 +9,8 @@ namespace {
 
 constexpr double kCovarianceDiagonalEpsilon = 1e-12;
 constexpr double kCovarianceDiagonalNegativeTolerance = 1e-9;
+constexpr double kSecPerUsec = 1e-6;
+constexpr double kGravityMps2 = 9.8;
 
 Eigen::Quaterniond RotVecToQuat(const Eigen::Vector3d& phi) {
     double theta = phi.norm();
@@ -86,7 +88,7 @@ void Eskf::Predict(const ImuSample& current_imu_sample) {
     // advances that state to t_k.
     const std::int64_t current_imu_utime = current_imu_sample.utime;
     const std::int64_t dt_us = current_imu_utime - previous_imu_utime_;
-    const double dt_s = static_cast<double>(dt_us) * 1e-6;
+    const double dt_s = static_cast<double>(dt_us) * kSecPerUsec;
     const Eigen::Vector3d omega_I = current_imu_sample.rotation_rate;
     const Eigen::Vector3d dtheta_I = omega_I * dt_s;
     const Eigen::Quaterniond dq_Ikm1_Ik = RotVecToQuat(dtheta_I);
@@ -95,7 +97,7 @@ void Eskf::Predict(const ImuSample& current_imu_sample) {
     // Use the inverse of the current IMU sample's q_AI to express gravity in
     // the current IMU frame I_k, then combine that with the measured specific
     // force to recover linear acceleration in I_k.
-    const Eigen::Vector3d g_A(0.0, 0.0, -9.8);
+    const Eigen::Vector3d g_A(0.0, 0.0, -kGravityMps2);
     const Eigen::Quaterniond q_IA =
         current_imu_sample.q_AI.normalized().conjugate();
     const Eigen::Vector3d g_I = q_IA * g_A;
