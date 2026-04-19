@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <cstdint>
 
 #include "scene_types.hpp"
 
@@ -17,22 +18,32 @@ class Eskf {
     void Initialize(const StartupInitialization& startup_initialization);
 
     /**
-     * @brief Propagate the filter with one IMU sample.
+     * @brief Propagate the filter from the previous IMU sample to the current
+     * one.
      *
-     * @param imu_sample IMU sample used for propagation.
+     * @param current_imu_sample Current IMU sample k used for propagation from
+     *     t_{k-1} to t_k.
      */
-    void Predict(const ImuSample& imu_sample);
+    void Predict(const ImuSample& current_imu_sample);
 
    private:
+    /// Nominal state at the latest propagated IMU timestamp.
+    ///
+    /// At Eskf::Predict entry, this is the previous state at t_{k-1}. At
+    /// Eskf::Predict exit, this has been advanced to the current state at t_k.
     struct NominalState {
-        Eigen::Vector3d p_G{0.0, 0.0, 0.0};
-        Eigen::Vector3d v_G{0.0, 0.0, 0.0};
-        Eigen::Quaterniond q_GI{1.0, 0.0, 0.0, 0.0};
+        Eigen::Vector3d p_G{0.0, 0.0, 0.0};  ///< Nominal position in frame G.
+        Eigen::Vector3d v_G{0.0, 0.0, 0.0};  ///< Nominal velocity in frame G.
+        Eigen::Quaterniond q_GI{
+            1.0,
+            0.0,
+            0.0,
+            0.0};  ///< Nominal attitude quaternion from the state's IMU frame to G.
     };
 
     NominalState nominal_state_;
     Eigen::Matrix<double, 9, 9> P_ = Eigen::Matrix<double, 9, 9>::Zero();
-    std::int64_t last_imu_utime_ = 0;
+    std::int64_t previous_imu_utime_ = 0;
     bool initialized_ = false;
 };
 

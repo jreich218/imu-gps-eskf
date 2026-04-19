@@ -58,7 +58,7 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     nominal_state_.p_G = startup_initialization.p0_G;
     nominal_state_.v_G = startup_initialization.v0_G;
     nominal_state_.q_GI = startup_initialization.q0_GI.normalized();
-    last_imu_utime_ = startup_initialization.last_imu_utime;
+    previous_imu_utime_ = startup_initialization.previous_imu_utime;
 
     P_.setZero();
 
@@ -77,35 +77,67 @@ void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     initialized_ = true;
 }
 
-void Eskf::Predict(const ImuSample& imu_sample) {
+void Eskf::Predict(const ImuSample& current_imu_sample) {
     if (!initialized_) {
         throw std::runtime_error("Eskf::Predict: filter is not initialized.");
     }
-    std::int64_t dt_us = imu_sample.utime - last_imu_utime_;
-    const double dt_s = static_cast<double>(dt_us) * 1e-6;
-    last_imu_utime_ = imu_sample.utime;
+
+    // The stored nominal state is currently at the previous IMU sample time
+    // t_{k-1}. The incoming IMU sample is the current sample at time t_k.
+    const std::int64_t current_imu_utime = current_imu_sample.utime;
+    const std::int64_t dt_previous_to_current_us =
+        current_imu_utime - previous_imu_utime_;
+    const double dt_previous_to_current_s =
+        static_cast<double>(dt_previous_to_current_us) * 1e-6;
 
     // Integrate the measured angular velocity to advance the nominal attitude
-    // `q_GI`.
-    const Eigen::Vector3d omega_I = imu_sample.rotation_rate;
-    const Eigen::Vector3d dtheta_I = omega_I * dt_s;
-    Eigen::Quaterniond dq_IkIkp1 = RotVecToQuat(dtheta_I);
-    nominal_state_.q_GI = (nominal_state_.q_GI * dq_IkIkp1).normalized();
-    // Use the inverse of the IMU's `q_AI` to express gravity in frame `I`, then
-    // combine that with the measured specific force to recover linear
-    // acceleration in `I`.
-    const Eigen::Vector3d g_A(0.0, 0.0, -9.80665);
-    const Eigen::Quaterniond q_IA = imu_sample.q_AI.normalized().conjugate();
-    const Eigen::Vector3d g_I = q_IA * g_A;
-    const Eigen::Vector3d linear_acc_I = g_I + imu_sample.specific_force;
-    // Rotate that acceleration into frame `G`, then propagate nominal position
-    // `p_G` and velocity `v_G`.
-    const Eigen::Vector3d linear_acc_G = nominal_state_.q_GI * linear_acc_I;
-    nominal_state_.p_G = nominal_state_.p_G + nominal_state_.v_G * dt_s +
-                         0.5 * linear_acc_G * dt_s * dt_s;
-    nominal_state_.v_G = nominal_state_.v_G + linear_acc_G * dt_s;
+    // from the previous IMU frame I_{k-1} to the current IMU frame I_k.
+    //
+    // Before this assignment:
+    //
+    //     q_GI = ^G q_{I_{k-1}}
+    //
+    // The incremental quaternion is:
+    //
+    //     delta_q_I_prev_I_curr = ^{I_{k-1}} q_{I_k}
+    //
+    // After composition:
+    //
+    //     q_GI = ^G q_{I_k}
+    const Eigen::Vector3d omega_I_curr = current_imu_sample.rotation_rate;
+    const Eigen::Vector3d delta_theta_I_prev_to_curr =
+        omega_I_curr * dt_previous_to_current_s;
+    const Eigen::Quaterniond delta_q_I_prev_I_curr =
+        RotVecToQuat(delta_theta_I_prev_to_curr);
+    nominal_state_.q_GI =
+        (nominal_state_.q_GI * delta_q_I_prev_I_curr).normalized();
 
-    // Covariance update
+    // Use the inverse of the current IMU sample's q_AI to express gravity in
+    // the current IMU frame I_k, then combine that with the measured specific
+    // force to recover linear acceleration in I_k.
+    const Eigen::Vector3d g_A(0.0, 0.0, -9.80665);
+    const Eigen::Quaterniond q_I_curr_A =
+        current_imu_sample.q_AI.normalized().conjugate();
+    const Eigen::Vector3d g_I_curr = q_I_curr_A * g_A;
+    const Eigen::Vector3d linear_acc_I_curr =
+        g_I_curr + current_imu_sample.specific_force;
+
+    // Rotate the current-frame acceleration into frame G, then propagate the
+    // nominal position and velocity from t_{k-1} to t_k.
+    const Eigen::Vector3d linear_acc_G_curr =
+        nominal_state_.q_GI * linear_acc_I_curr;
+    nominal_state_.p_G =
+        nominal_state_.p_G +
+        nominal_state_.v_G * dt_previous_to_current_s +
+        0.5 * linear_acc_G_curr * dt_previous_to_current_s *
+            dt_previous_to_current_s;
+    nominal_state_.v_G =
+        nominal_state_.v_G +
+        linear_acc_G_curr * dt_previous_to_current_s;
+
+    // Covariance update. F maps the previous error state at t_{k-1} to the
+    // current error state at t_k. G maps the current IMU noise over the same
+    // previous-to-current interval into the current error state.
     const auto skew_symmetric = [](const Eigen::Vector3d& v) {
         Eigen::Matrix3d skew;
         skew << 0.0, -v.z(), v.y(), v.z(), 0.0, -v.x(), -v.y(), v.x(), 0.0;
@@ -113,22 +145,30 @@ void Eskf::Predict(const ImuSample& imu_sample) {
     };
 
     const Eigen::Matrix3d I3 = Eigen::Matrix3d::Identity();
-    const Eigen::Matrix3d R_GI = nominal_state_.q_GI.toRotationMatrix();
-    const Eigen::Matrix3d linear_acc_I_cross = skew_symmetric(linear_acc_I);
-    const Eigen::Matrix3d omega_I_cross = skew_symmetric(omega_I);
+    const Eigen::Matrix3d R_GI_curr = nominal_state_.q_GI.toRotationMatrix();
+    const Eigen::Matrix3d linear_acc_I_curr_cross =
+        skew_symmetric(linear_acc_I_curr);
+    const Eigen::Matrix3d omega_I_curr_cross =
+        skew_symmetric(omega_I_curr);
 
     Eigen::Matrix<double, 9, 9> F = Eigen::Matrix<double, 9, 9>::Zero();
     F.block<3, 3>(0, 0) = I3;
-    F.block<3, 3>(0, 3) = I3 * dt_s;
-    F.block<3, 3>(0, 6) = -0.5 * R_GI * linear_acc_I_cross * dt_s * dt_s;
+    F.block<3, 3>(0, 3) = I3 * dt_previous_to_current_s;
+    F.block<3, 3>(0, 6) =
+        -0.5 * R_GI_curr * linear_acc_I_curr_cross *
+        dt_previous_to_current_s * dt_previous_to_current_s;
     F.block<3, 3>(3, 3) = I3;
-    F.block<3, 3>(3, 6) = -R_GI * linear_acc_I_cross * dt_s;
-    F.block<3, 3>(6, 6) = I3 - omega_I_cross * dt_s;
+    F.block<3, 3>(3, 6) =
+        -R_GI_curr * linear_acc_I_curr_cross * dt_previous_to_current_s;
+    F.block<3, 3>(6, 6) =
+        I3 - omega_I_curr_cross * dt_previous_to_current_s;
 
     Eigen::Matrix<double, 9, 6> G = Eigen::Matrix<double, 9, 6>::Zero();
-    G.block<3, 3>(0, 0) = 0.5 * R_GI * dt_s * dt_s;
-    G.block<3, 3>(3, 0) = R_GI * dt_s;
-    G.block<3, 3>(6, 3) = I3 * dt_s;
+    G.block<3, 3>(0, 0) =
+        0.5 * R_GI_curr * dt_previous_to_current_s *
+        dt_previous_to_current_s;
+    G.block<3, 3>(3, 0) = R_GI_curr * dt_previous_to_current_s;
+    G.block<3, 3>(6, 3) = I3 * dt_previous_to_current_s;
 
     constexpr double kAccelNoiseStd = 0.5;
     constexpr double kGyroNoiseStd = 0.05;
@@ -145,4 +185,8 @@ void Eskf::Predict(const ImuSample& imu_sample) {
 
     P_ = F * P_ * F.transpose() + process_noise_covariance;
     SymmetrizeAndClampCovariance(P_);
+
+    // The current IMU sample is now the previous IMU sample for the next
+    // Predict call.
+    previous_imu_utime_ = current_imu_utime;
 }

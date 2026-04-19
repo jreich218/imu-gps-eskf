@@ -45,7 +45,7 @@ struct ReadyEstimate2D {
     Eigen::Vector2d position_xy{0.0, 0.0};
     Eigen::Vector2d velocity_xy{0.0, 0.0};
     double yaw_rad = 0.0;
-    std::size_t next_gps_index = 0;
+    std::size_t first_unprocessed_gps_index = 0;
 };
 
 double WrapAngle(double angle_rad) {
@@ -517,7 +517,7 @@ std::optional<ReadyEstimate2D> FormReadyEstimate(
     const QuadraticPathFit& path_fit,
     double blended_speed_mps,
     double blended_yaw_rad,
-    std::size_t next_gps_index) {
+    std::size_t first_unprocessed_gps_index) {
     // Turn one trustworthy GPS window into the 2D ready state that startup has
     // been seeking.
     //
@@ -536,7 +536,7 @@ std::optional<ReadyEstimate2D> FormReadyEstimate(
     ready_estimate.velocity_xy =
         blended_speed_mps * UnitDirection(blended_yaw_rad);
     ready_estimate.yaw_rad = blended_yaw_rad;
-    ready_estimate.next_gps_index = next_gps_index;
+    ready_estimate.first_unprocessed_gps_index = first_unprocessed_gps_index;
     return ready_estimate;
 }
 
@@ -550,9 +550,10 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
     // - find that handoff IMU sample
     // - accumulate IMU yaw across the carry interval
     // - carry position forward across the gap using the ready velocity
-    // - build `q0_GI` from the carried yaw and the handoff IMU orientation
-    // - populate `p0_G`, `v0_G`, `q0_GI`, `next_imu_index`, and
-    //   `next_gps_index`
+    // - build `q0_GI` at that handoff timestamp from the carried yaw and the
+    //   handoff IMU orientation
+    // - populate the startup state at that same timestamp, along with the
+    //   first IMU and GPS samples left for runtime filtering
     std::size_t handoff_imu_index = 0;
     while (handoff_imu_index < imu_samples.size() &&
            imu_samples[handoff_imu_index].utime < ready_estimate.ready_utime) {
@@ -582,9 +583,11 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
         ready_estimate.velocity_xy.x(), ready_estimate.velocity_xy.y(), 0.0);
     startup_initialization.q0_GI =
         BuildGlobalOrientation(carried_yaw_rad, handoff_imu_sample);
-    startup_initialization.last_imu_utime = handoff_imu_sample.utime;
-    startup_initialization.next_imu_index = handoff_imu_index + 1;
-    startup_initialization.next_gps_index = ready_estimate.next_gps_index;
+    startup_initialization.previous_imu_utime = handoff_imu_sample.utime;
+    startup_initialization.first_unprocessed_imu_index =
+        handoff_imu_index + 1;
+    startup_initialization.first_unprocessed_gps_index =
+        ready_estimate.first_unprocessed_gps_index;
     return startup_initialization;
 }
 
