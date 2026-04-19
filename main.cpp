@@ -24,10 +24,10 @@ int main() {
             throw std::runtime_error(
                 "Could not compute startup initialization.");
         }
-        // Initialize filter covariance
+        // Initialize the filter
         Eskf eskf;
         eskf.Initialize(*startup_initialization);
-        // Loop over estimator runtime here goes here.
+        // Runtime estimator loop will be added here
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
