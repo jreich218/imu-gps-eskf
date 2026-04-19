@@ -34,12 +34,6 @@ struct PrincipalDirectionSummary {
     double projected_start_to_end_m = 0.0;
 };
 
-struct HeadingSample {
-    std::size_t gps_end_index = 0;
-    std::int64_t end_utime = 0;
-    double yaw_rad = 0.0;
-};
-
 struct ReadyEstimate2D {
     std::int64_t ready_utime = 0;
     Eigen::Vector2d position_xy{0.0, 0.0};
@@ -372,26 +366,26 @@ double ComputeGlobalYaw(const PrincipalDirectionSummary& principal_direction,
     return WrapAngle(principal_component_yaw_rad + 0.5 * total_delta_yaw_rad);
 }
 
-double ComputeTangentWeight(const std::vector<HeadingSample>& heading_samples) {
+double ComputeTangentWeight(const std::vector<double>& heading_yaws_rad) {
     // Measure how stable the most recent tangent headings have been.
     //
     // The result will be a weight in `[0, 1]`:
     // - near `1` when the recent tangent headings look stable enough to trust
     // - near `0` when they are still wobbling and the global heading should
     //   dominate
-    if (heading_samples.size() < kStabilityWindow) {
+    if (heading_yaws_rad.size() < kStabilityWindow) {
         return 0.0;
     }
 
-    const double latest_yaw_rad = heading_samples.back().yaw_rad;
+    const double latest_yaw_rad = heading_yaws_rad.back();
     const std::size_t first_recent_index =
-        heading_samples.size() - kStabilityWindow;
+        heading_yaws_rad.size() - kStabilityWindow;
     double max_error_rad = 0.0;
-    for (std::size_t index = first_recent_index; index < heading_samples.size();
+    for (std::size_t index = first_recent_index; index < heading_yaws_rad.size();
          ++index) {
         max_error_rad =
             std::max(max_error_rad,
-                     std::abs(AngleDiff(heading_samples[index].yaw_rad,
+                     std::abs(AngleDiff(heading_yaws_rad[index],
                                         latest_yaw_rad)));
     }
 
@@ -513,11 +507,10 @@ double RequiredProjectedSeparation(std::size_t gps_points_used) {
                : kEarlyMinProjectedSeparationM;
 }
 
-std::optional<ReadyEstimate2D> FormReadyEstimate(
-    const QuadraticPathFit& path_fit,
-    double blended_speed_mps,
-    double blended_yaw_rad,
-    std::size_t first_unprocessed_gps_index) {
+ReadyEstimate2D FormReadyEstimate(const QuadraticPathFit& path_fit,
+                                  double blended_speed_mps,
+                                  double blended_yaw_rad,
+                                  std::size_t first_unprocessed_gps_index) {
     // Turn one trustworthy GPS window into the 2D ready state that startup has
     // been seeking.
     //
@@ -596,18 +589,12 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
 std::optional<StartupInitialization> ComputeStartupInitialization(
     const std::vector<ImuSample>& imu_samples,
     const std::vector<GpsSample>& gps_samples) {
-    // 1. Find the first GPS sample that startup is allowed to use. Startup
-    //    only begins once the IMU stream has begun, so any earlier GPS samples
-    //    are outside the startup time interval.
     const std::optional<std::size_t> first_gps_index =
         FindFirstUsableGpsIndex(imu_samples, gps_samples);
     if (!first_gps_index.has_value()) {
         return std::nullopt;
     }
 
-    // 2. Count how many GPS points remain from that first usable sample
-    //    onward. Startup cannot proceed unless there are enough points to fit
-    //    the first quadratic path.
     const std::size_t startup_begin_gps_index = *first_gps_index;
     const std::size_t gps_points_available =
         gps_samples.size() - startup_begin_gps_index;
@@ -615,22 +602,14 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
         return std::nullopt;
     }
 
-    // 3. Sweep the GPS window from the minimum three-point fit upward. Each
-    //    loop iteration represents one candidate startup window ending at
-    //    `gps_end_index`.
-    std::vector<HeadingSample> recent_heading_samples;
+    std::vector<double> recent_heading_yaws_rad;
     for (std::size_t gps_end_index =
              startup_begin_gps_index + (kMinFitPointCount - 1);
          gps_end_index < gps_samples.size();
          ++gps_end_index) {
-        // 4. Fit the current quadratic path in time over the inclusive GPS
-        //    window `[startup_begin_gps_index, gps_end_index]`.
         const QuadraticPathFit path_fit = FitQuadraticPath(
             gps_samples, startup_begin_gps_index, gps_end_index);
 
-        // 5. Evaluate the endpoint tangent velocity of that fit. The later
-        //    startup logic uses that one vector to get the local tangent
-        //    heading and the local endpoint speed.
         const Eigen::Vector2d endpoint_velocity = VelocityAt(path_fit, 0.0);
         const double endpoint_speed_mps = endpoint_velocity.norm();
         if (!(endpoint_speed_mps > kMinEndpointSpeed)) {
@@ -639,22 +618,12 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
         const double tangent_yaw_rad =
             std::atan2(endpoint_velocity.y(), endpoint_velocity.x());
 
-        // 6. Record the current tangent heading in the recent-heading history.
-        //    The recent-heading history measures whether the tangent direction
-        //    has stabilized yet.
-        recent_heading_samples.push_back(
-            {gps_end_index, path_fit.end_utime, tangent_yaw_rad});
+        recent_heading_yaws_rad.push_back(tangent_yaw_rad);
 
-        // 7. Summarize the current GPS cloud with a principal-direction
-        //    calculation. That summary supplies the global heading candidate
-        //    and the projected-separation trust signal.
         const PrincipalDirectionSummary principal_direction =
             SummarizePrincipalDirection(
                 gps_samples, startup_begin_gps_index, gps_end_index);
 
-        // 8. Require enough projected start-to-end separation before trusting
-        //    this startup window. The threshold starts stricter and then
-        //    relaxes after enough GPS points have been seen.
         const std::size_t gps_points_used =
             gps_end_index - startup_begin_gps_index + 1;
         const double required_projected_separation_m =
@@ -664,25 +633,17 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
             continue;
         }
 
-        // 9. Build the global heading estimate. When the cloud is line-like,
-        //    the principal direction itself is enough. When it is not line-
-        //    like, IMU yaw accumulation makes that heading curvature-aware.
         const std::int64_t startup_begin_utime =
             gps_samples[startup_begin_gps_index].utime;
         const std::int64_t ready_utime = path_fit.end_utime;
         const double global_yaw_rad = ComputeGlobalYaw(
             principal_direction, imu_samples, startup_begin_utime, ready_utime);
 
-        // 10. Measure recent tangent-heading stability and use that stability
-        //     as the weight for blending the local tangent heading with the
-        //     global heading.
         const double tangent_weight =
-            ComputeTangentWeight(recent_heading_samples);
+            ComputeTangentWeight(recent_heading_yaws_rad);
         const double blended_yaw_rad =
             BlendYaw(tangent_yaw_rad, global_yaw_rad, tangent_weight);
 
-        // 11. Choose the recent-speed window and compute the recent local and
-        //     recent global speeds from the fitted path and recent geometry.
         const std::int64_t recent_start_utime =
             RecentSpeedWindowStartUtime(startup_begin_utime, ready_utime);
         const double local_speed_mps =
@@ -693,24 +654,14 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
                                                            recent_start_utime,
                                                            global_yaw_rad);
 
-        // 12. Blend the recent local and global speed estimates with the same
-        //     weight already used for the heading blend.
         const double blended_speed_mps =
             BlendSpeed(local_speed_mps, global_speed_mps, tangent_weight);
 
-        // 13. As soon as one GPS window looks trustworthy, package the ready
-        //     2D startup state and stop extending the window any further.
-        const std::optional<ReadyEstimate2D> ready_estimate = FormReadyEstimate(
+        const ReadyEstimate2D ready_estimate = FormReadyEstimate(
             path_fit, blended_speed_mps, blended_yaw_rad, gps_end_index + 1);
-        if (!ready_estimate.has_value()) {
-            continue;
-        }
 
-        // 14. Carry that ready state forward to the first IMU sample at or
-        //     after the ready time, then return the completed startup result.
-        return FinalizeAtImuHandoff(*ready_estimate, imu_samples);
+        return FinalizeAtImuHandoff(ready_estimate, imu_samples);
     }
 
-    // 15. If no GPS window ever becomes trustworthy, startup has no result.
     return std::nullopt;
 }
