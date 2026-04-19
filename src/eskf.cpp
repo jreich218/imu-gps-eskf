@@ -35,8 +35,10 @@ constexpr double DegToRad(double deg) {
 
 void SymmetrizeAndClampCovariance(
     Eigen::Matrix<double, 9, 9>& covariance_matrix) {
-    covariance_matrix =
+    // Use a temporary here to avoid Eigen aliasing on the transpose expression.
+    const Eigen::Matrix<double, 9, 9> symmetrized =
         0.5 * (covariance_matrix + covariance_matrix.transpose());
+    covariance_matrix = symmetrized;
 
     for (int i = 0; i < covariance_matrix.rows(); ++i) {
         const double covariance_diagonal = covariance_matrix(i, i);
