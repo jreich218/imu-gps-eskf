@@ -96,11 +96,11 @@ void Eskf::Predict(const ImuSample& current_imu_sample) {
     // the current IMU frame I_k, then combine that with the measured specific
     // force to recover linear acceleration in I_k.
     const Eigen::Vector3d g_A(0.0, 0.0, -9.8);
-    const Eigen::Quaterniond q_I_curr_A =
+    const Eigen::Quaterniond q_IA =
         current_imu_sample.q_AI.normalized().conjugate();
-    const Eigen::Vector3d g_I_curr = q_I_curr_A * g_A;
+    const Eigen::Vector3d g_I = q_IA * g_A;
     const Eigen::Vector3d linear_acc_I =
-        g_I_curr + current_imu_sample.specific_force;
+        g_I + current_imu_sample.specific_force;
 
     // Rotate the current-frame acceleration into frame G, then propagate the
     // nominal position and velocity from t_{k-1} to t_k.
@@ -109,9 +109,6 @@ void Eskf::Predict(const ImuSample& current_imu_sample) {
                          0.5 * linear_acc_G * dt_s * dt_s;
     nominal_state_.v_G = nominal_state_.v_G + linear_acc_G * dt_s;
 
-    // Covariance update. F maps the previous error state at t_{k-1} to the
-    // current error state at t_k. G maps the current IMU noise over the same
-    // previous-to-current interval into the current error state.
     const auto skew_symmetric = [](const Eigen::Vector3d& v) {
         Eigen::Matrix3d skew;
         skew << 0.0, -v.z(), v.y(), v.z(), 0.0, -v.x(), -v.y(), v.x(), 0.0;
