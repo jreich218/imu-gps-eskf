@@ -64,7 +64,7 @@ outputs/
 artifacts/
 results/
 plots/
-tmp/
+sqlite_scenes/
 cache/
 
 *.ndjson
