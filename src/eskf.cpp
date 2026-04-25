@@ -58,6 +58,67 @@ void SymmetrizeAndClampCovariance(
 }
 }  // namespace
 
+GpsUpdateResult Eskf::UpdateGps(const GpsSample& gps_sample) {
+    if (!initialized_) {
+        throw std::runtime_error("Eskf::UpdateGps: filter is not initialized.");
+    }
+
+    const Eigen::Vector2d predicted_xy(nominal_state_.p_G.x(),
+                                       nominal_state_.p_G.y());
+    const Eigen::Vector2d innovation_xy = gps_sample.xy - predicted_xy;
+
+    Eigen::Matrix<double, 2, 9> measurement_jacobian =
+        Eigen::Matrix<double, 2, 9>::Zero();
+    measurement_jacobian(0, 0) = 1.0;
+    measurement_jacobian(1, 1) = 1.0;
+
+    const Eigen::Matrix2d measurement_noise_covariance =
+        kGpsMeasurementSigmaXY * kGpsMeasurementSigmaXY *
+        Eigen::Matrix2d::Identity();
+
+    const Eigen::Matrix2d innovation_covariance =
+        measurement_jacobian * P_ * measurement_jacobian.transpose() +
+        measurement_noise_covariance;
+
+    Eigen::LDLT<Eigen::Matrix2d> ldlt(innovation_covariance);
+    if (ldlt.info() != Eigen::Success) {
+        throw std::runtime_error(
+            "Eskf::UpdateGps: failed to factorize innovation covariance.");
+    }
+
+    const Eigen::Matrix<double, 9, 2> state_measurement_cross_covariance =
+        P_ * measurement_jacobian.transpose();
+    const Eigen::Matrix<double, 9, 2> kalman_gain =
+        state_measurement_cross_covariance *
+        ldlt.solve(Eigen::Matrix2d::Identity());
+
+    const double nis = innovation_xy.dot(ldlt.solve(innovation_xy));
+
+    const Eigen::Matrix<double, 9, 1> state_error = kalman_gain * innovation_xy;
+    const Eigen::Vector3d delta_p_G = state_error.segment<3>(0);
+    const Eigen::Vector3d delta_v_G = state_error.segment<3>(3);
+    const Eigen::Vector3d delta_theta = state_error.segment<3>(6);
+
+    nominal_state_.p_G += delta_p_G;
+    nominal_state_.v_G += delta_v_G;
+    nominal_state_.q_GI =
+        (nominal_state_.q_GI * RotVecToQuat(delta_theta)).normalized();
+
+    const Eigen::Matrix<double, 9, 9> identity_matrix =
+        Eigen::Matrix<double, 9, 9>::Identity();
+    const Eigen::Matrix<double, 9, 9> I_minus_KH =
+        identity_matrix - kalman_gain * measurement_jacobian;
+
+    P_ = I_minus_KH * P_ * I_minus_KH.transpose() +
+         kalman_gain * measurement_noise_covariance * kalman_gain.transpose();
+    SymmetrizeAndClampCovariance(P_);
+
+    GpsUpdateResult update_result;
+    update_result.innovation_xy = innovation_xy;
+    update_result.nis = nis;
+    return update_result;
+}
+
 void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     nominal_state_.p_G = startup_initialization.p0_G;
     nominal_state_.v_G = startup_initialization.v0_G;

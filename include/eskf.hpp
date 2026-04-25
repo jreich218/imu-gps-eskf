@@ -7,6 +7,13 @@
 
 #include "scene_types.hpp"
 
+/// Diagnostics from one 2D GPS update.
+struct GpsUpdateResult {
+    Eigen::Vector2d innovation_xy{0.0,
+                                  0.0};  ///< Horizontal innovation in meters.
+    double nis = 0.0;                    ///< Normalized innovation squared.
+};
+
 /// Error-state Kalman filter over position, velocity, and attitude.
 class Eskf {
    public:
@@ -26,6 +33,14 @@ class Eskf {
      */
     void Predict(const ImuSample& current_imu_sample);
 
+    /**
+     * @brief Update the filter with one 2D GPS position measurement.
+     *
+     * @param gps_sample GPS measurement at the current update time.
+     * @return Innovation and NIS from this GPS update.
+     */
+    GpsUpdateResult UpdateGps(const GpsSample& gps_sample);
+
    private:
     /// Nominal state at the latest propagated IMU timestamp.
     ///
@@ -35,10 +50,8 @@ class Eskf {
         Eigen::Vector3d p_G{0.0, 0.0, 0.0};  ///< Nominal position in frame G.
         Eigen::Vector3d v_G{0.0, 0.0, 0.0};  ///< Nominal velocity in frame G.
         Eigen::Quaterniond q_GI{
-            1.0,
-            0.0,
-            0.0,
-            0.0};  ///< Nominal attitude quaternion from the state's IMU frame to G.
+            1.0, 0.0, 0.0, 0.0};  ///< Nominal attitude quaternion from the
+                                  ///< state's IMU frame to G.
     };
 
     NominalState nominal_state_;
