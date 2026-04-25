@@ -120,6 +120,14 @@ GpsUpdateResult Eskf::UpdateGps(const GpsSample& gps_sample) {
     return update_result;
 }
 
+const Eigen::Vector3d& Eskf::PositionG() const {
+    if (!initialized_) {
+        throw std::runtime_error("Eskf::PositionG: filter is not initialized.");
+    }
+
+    return nominal_state_.p_G;
+}
+
 void Eskf::Initialize(const StartupInitialization& startup_initialization) {
     nominal_state_.p_G = startup_initialization.p0_G;
     nominal_state_.v_G = startup_initialization.v0_G;

@@ -41,6 +41,13 @@ class Eskf {
      */
     GpsUpdateResult UpdateGps(const GpsSample& gps_sample);
 
+    /**
+     * @brief Get the current nominal position in frame G.
+     *
+     * @return Current nominal position in frame G.
+     */
+    const Eigen::Vector3d& PositionG() const;
+
    private:
     /// Nominal state at the latest propagated IMU timestamp.
     ///
