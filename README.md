@@ -65,6 +65,6 @@ Visual Studio Code should open the terminal there automatically.
 
 ## Output
 
-- Then main output is `output/eskf_sim_log.csv`. Each row is one GPS update. It records the timestamp, the filter position estimate, the GPS measurement, the reference pose, the GPS innovation, the NIS, and the resulting position error so you can inspect how the filter behaved over the run.
+- The main output is `output/eskf_sim_log.csv`. Each row is one GPS update. It records the timestamp, the filter position estimate, the GPS measurement, the reference pose, the GPS innovation, the NIS, and the resulting position error so you can inspect how the filter behaved over the run.
 - The app also prints a short run summary to stdout, including the number of GPS updates and the xy RMSE for raw GPS and for the ESKF.
 - The app creates and uses synthetic GPS data at runtime from the selected pose stream. The generated samples are written to `output/gps.json` for optional inspection.
