@@ -11,6 +11,7 @@ constexpr double kCovarianceDiagonalEpsilon = 1e-12;
 constexpr double kCovarianceDiagonalNegativeTolerance = 1e-9;
 constexpr double kSecPerUsec = 1e-6;
 constexpr double kGravityMps2 = 9.8;
+constexpr double kGpsMeasurementSigmaXY = 2.0;
 
 Eigen::Quaterniond RotVecToQuat(const Eigen::Vector3d& phi) {
     double theta = phi.norm();

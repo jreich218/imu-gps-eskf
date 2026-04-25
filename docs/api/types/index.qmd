@@ -1,6 +1,6 @@
 ---
 title: "Types"
-description: "Browse the public API by type."
+description: "Browse the API reference by type."
 body-classes: "cpp-api-page cpp-api-types-page"
 ---
 

@@ -86,4 +86,21 @@ if(BUILD_TESTING)
   endif()
 
   gtest_discover_tests(initialization_tests)
+
+  add_executable(eskf_tests
+    tests/test_eskf.cpp
+    src/eskf.cpp
+  )
+
+  target_include_directories(eskf_tests PRIVATE include)
+  target_link_libraries(eskf_tests PRIVATE
+    Eigen3::Eigen
+    GTest::gtest_main
+  )
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(eskf_tests PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+
+  gtest_discover_tests(eskf_tests)
 endif()
