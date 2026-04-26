@@ -15,11 +15,13 @@ add_executable(imu-gps-eskf
   include/scene_types.hpp
   include/gps_generation.hpp
   include/eskf.hpp
+  include/runtime_loop.hpp
   main.cpp
   src/initialization.cpp
   src/scene_io.cpp
   src/gps_generation.cpp
   src/eskf.cpp
+  src/runtime_loop.cpp
 )
 
 target_include_directories(imu-gps-eskf PRIVATE include)
@@ -103,4 +105,23 @@ if(BUILD_TESTING)
   endif()
 
   gtest_discover_tests(eskf_tests)
+
+  add_executable(runtime_loop_tests
+    tests/test_runtime_loop.cpp
+    src/runtime_loop.cpp
+    src/eskf.cpp
+  )
+
+  target_include_directories(runtime_loop_tests PRIVATE include)
+  target_link_libraries(runtime_loop_tests PRIVATE
+    Eigen3::Eigen
+    GTest::gtest_main
+  )
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(runtime_loop_tests PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+
+  gtest_discover_tests(runtime_loop_tests)
+
 endif()
