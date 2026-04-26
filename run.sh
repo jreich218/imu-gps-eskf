@@ -4,7 +4,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${REPO_ROOT}/build"
-SYNC_SCRIPT="${REPO_ROOT}/sync_docs_from_quarto_site.sh"
+SYNC_SCRIPT="${REPO_ROOT}/sync_eskf_docs_from_quarto_site.sh"
 EXECUTABLE_PATH="${BUILD_DIR}/imu-gps-eskf"
 
 cmake -S "${REPO_ROOT}" -B "${BUILD_DIR}" -DBUILD_TESTING=ON

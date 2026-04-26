@@ -1,9 +1,0 @@
----
-title: "IMU-GPS-ESKF API Reference"
-description: "Browse the [imu-gps-eskf](https://github.com/jreich218/imu-gps-eskf) project's API reference by [Groups](groups/) and [Types](types/)."
----
-
-The API reference can be browsed by [Groups](groups/) and [Types](types/).
-
-- [Groups](groups/): free functions grouped by shared purpose.
-- [Types](types/): public structs and classes.

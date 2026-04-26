@@ -13,7 +13,7 @@ This repository is a C++/Eigen IMU+GPS Error-State Kalman Filter baseline for eg
 
 If you'd like to use the simulation-built data bundled with this repo, then the project can be built and run as is.
 
-This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and `scene-XXXX_pose.json` / `scene-XXXX_ms_imu.json` pairs from the nuScenes CAN bus data published February 2020 by nuScenes [which you have to download separately from this repo]. No nuScenes data is shipped here. See [the input files docs](https://jasonmreich.com/docs/reference/input-files) for more details if you plan on using your own copy of the nuScenes CAN bus data.
+This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and `scene-XXXX_pose.json` / `scene-XXXX_ms_imu.json` pairs from the nuScenes CAN bus data published February 2020 by nuScenes [which you have to download separately from this repo]. No nuScenes data is shipped here. See [the input files docs](https://jasonmreich.com/eskf_docs/reference/input-files) for more details if you plan on using your own copy of the nuScenes CAN bus data.
 
 ## Disclaimers
 
