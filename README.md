@@ -45,7 +45,7 @@ sudo apt-get install -y cmake g++ libeigen3-dev nlohmann-json3-dev
 Run this from the repo root:
 
 ```bash
-./run.sh
+./dev.sh
 ```
 
 ### 2. Build in a dev container
@@ -62,7 +62,7 @@ Once the container opens, run these from the repo root inside the container.
 Visual Studio Code should open the terminal there automatically.
 
 ```bash
-./run.sh
+./dev.sh
 ```
 
 ## Output
