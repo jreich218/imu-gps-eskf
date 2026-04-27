@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Generate a README-friendly XY trajectory overlay from eskf_sim_log.csv."""
 
 from __future__ import annotations
 
@@ -18,9 +19,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 
-CSV_PATH = Path("/home/dfw/dev/imu-gps-eskf/output/eskf_sim_log.csv")
-OUTPUT_PATH = Path("/home/dfw/dev/imu-gps-eskf/output/xy_trajectory.png")
-
 REQUIRED_COLUMNS = (
     "est_x",
     "est_y",
@@ -29,6 +27,10 @@ REQUIRED_COLUMNS = (
     "true_x",
     "true_y",
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CSV_PATH = REPO_ROOT / "output" / "eskf_sim_log.csv"
+OUTPUT_PATH = REPO_ROOT / "output" / "xy_trajectory.png"
 
 
 def read_log(path: Path) -> dict[str, list[float]]:
@@ -70,14 +72,6 @@ def rmse_xy(ax: list[float], ay: list[float], bx: list[float], by: list[float]) 
     return math.sqrt(sum_sq / n)
 
 
-INK = "#111827"
-FOG = "#F8FAFC"
-ESTIMATION_BLUE = "#60A5FA"
-SENSOR_TEAL = "#0F766E"
-SIGNAL_AMBER = "#F59E0B"
-GRID = "#CBD5E1"
-
-
 def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float, float]:
     est_x = series["est_x"]
     est_y = series["est_y"]
@@ -90,72 +84,20 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     rmse_eskf_xy = rmse_xy(est_x, est_y, true_x, true_y)
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    fig.patch.set_facecolor("white")
-    ax.set_facecolor("white")
-
-    # Plot GPS first so the two trajectories sit on top of the cloud.
-    ax.scatter(
-        gps_x,
-        gps_y,
-        label="GPS",
-        color=SENSOR_TEAL,
-        s=18,
-        alpha=0.55,
-        edgecolors=FOG,
-        linewidths=0.35,
-        zorder=1,
-    )
-
-    # Plot ESKF as the primary result.
-    ax.plot(
-        est_x,
-        est_y,
-        label="ESKF",
-        color=ESTIMATION_BLUE,
-        linewidth=2.8,
-        zorder=3,
-    )
-
-    # Plot truth on top as a dashed reference so it stays distinguishable
-    # even where it closely overlaps the estimate.
-    ax.plot(
-        true_x,
-        true_y,
-        label="Truth",
-        color=INK,
-        linewidth=2.1,
-        linestyle=(0, (6, 3)),
-        zorder=4,
-    )
+    ax.plot(true_x, true_y, label="Truth", color="#111827", linewidth=2.2)
+    ax.scatter(gps_x, gps_y, label="GPS", color="#0F766E", s=16, alpha=0.65)
+    ax.plot(est_x, est_y, label="ESKF", color="#0F4C81", linewidth=2.0)
 
     start_marker = ax.scatter(
-        true_x[0],
-        true_y[0],
-        marker="o",
-        s=70,
-        color=SIGNAL_AMBER,
-        edgecolors=INK,
-        linewidths=0.8,
-        zorder=5,
-    )
+        true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
     finish_marker = ax.scatter(
-        true_x[-1],
-        true_y[-1],
-        marker="X",
-        s=95,
-        color=SIGNAL_AMBER,
-        edgecolors=INK,
-        linewidths=0.8,
-        zorder=5,
-    )
-
+        true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)
     start_annotation = ax.annotate(
         "Start",
         xy=(true_x[0], true_y[0]),
         xytext=(0, 8),
         textcoords="offset points",
         fontsize=9,
-        color=INK,
         ha="left",
         va="bottom",
     )
@@ -165,46 +107,29 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
         xytext=(0, 0),
         textcoords="offset points",
         fontsize=9,
-        color=INK,
         ha="left",
         va="bottom",
     )
 
-    rmse_text = ax.text(
+    ax.text(
         0.98,
         0.02,
-        f"Raw GPS RMSE (xy): {rmse_gps_xy:.3f} m\n"
-        f"ESKF RMSE (xy): {rmse_eskf_xy:.3f} m",
+        f"RMSE_GPS_xy: {rmse_gps_xy:.3f} m\nRMSE_ESKF_xy: {rmse_eskf_xy:.3f} m",
         transform=ax.transAxes,
         fontsize=10,
-        color=INK,
         ha="right",
         va="bottom",
-        bbox={
-            "boxstyle": "round,pad=0.35",
-            "facecolor": FOG,
-            "alpha": 0.96,
-            "edgecolor": GRID,
-            "linewidth": 1.0,
-        },
+        bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.9, "edgecolor": "#bbbbbb"},
     )
 
-    ax.set_xlabel("x [m]", color=INK)
-    ax.set_ylabel("y [m]", color=INK)
-    ax.set_title("XY trajectory overlay", color=INK)
-
-    ax.tick_params(colors=INK)
-    ax.grid(True, color=GRID, alpha=0.45, linewidth=0.8)
-    ax.set_aspect("equal", adjustable="box")
-    ax.margins(x=0.03, y=0.08)
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_title("XY trajectory overlay")
     ymin, ymax = ax.get_ylim()
-    ax.set_ylim(ymin, (5.0 / 3.0) * ymax)
-
-    legend = ax.legend(loc="upper left", frameon=True)
-    legend.get_frame().set_facecolor(FOG)
-    legend.get_frame().set_edgecolor(GRID)
-    legend.get_frame().set_alpha(0.96)
-
+    ax.set_ylim(ymin, 3.0 * ymax)
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="best")
     fig.tight_layout()
 
     def marker_bbox_px(marker_collection):
@@ -225,20 +150,6 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     axes_bbox = ax.get_window_extent(renderer=renderer)
-    legend_bbox = legend.get_window_extent(renderer=renderer)
-    rmse_bbox = rmse_text.get_bbox_patch().get_window_extent(renderer=renderer)
-    legend_top_gap_px = axes_bbox.y1 - legend_bbox.y1
-    target_rmse_y0_px = axes_bbox.y0 + legend_top_gap_px
-    rmse_dy_px = target_rmse_y0_px - rmse_bbox.y0
-    rmse_x_axes, rmse_y_axes = rmse_text.get_position()
-    rmse_anchor_x_px, rmse_anchor_y_px = ax.transAxes.transform(
-        (rmse_x_axes, rmse_y_axes))
-    _, target_rmse_y_axes = ax.transAxes.inverted().transform(
-        (rmse_anchor_x_px, rmse_anchor_y_px + rmse_dy_px))
-    rmse_text.set_position((rmse_x_axes, target_rmse_y_axes))
-    fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
-    axes_bbox = ax.get_window_extent(renderer=renderer)
     start_bbox = start_annotation.get_window_extent(renderer=renderer)
     target_start_x0_px = axes_bbox.x0 + 3.0
     dx_px = target_start_x0_px - start_bbox.x0
@@ -248,13 +159,7 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
 
     finish_bbox = finish_annotation.get_window_extent(renderer=renderer)
     finish_x_px, finish_y_px = ax.transData.transform((true_x[-1], true_y[-1]))
-    finish_font = finish_annotation.get_fontproperties()
-    finish_prefix_width_px = renderer.get_text_width_height_descent(
-        "Fi", finish_font, ismath=False)[0]
-    finish_n_width_px = renderer.get_text_width_height_descent(
-        "n", finish_font, ismath=False)[0]
-    finish_n_center_from_left_px = finish_prefix_width_px + 0.5 * finish_n_width_px
-    target_finish_x0_px = finish_x_px - finish_n_center_from_left_px
+    target_finish_x0_px = finish_x_px
     target_finish_y0_px = finish_y_px + 20.0
     finish_dx_px = target_finish_x0_px - finish_bbox.x0
     finish_dy_px = target_finish_y0_px - finish_bbox.y0
@@ -295,8 +200,8 @@ def main() -> int:
         return 1
 
     print(f"Wrote plot: {OUTPUT_PATH}")
-    print(f"Raw GPS RMSE (xy): {rmse_gps_xy:.6f} m")
-    print(f"ESKF RMSE (xy): {rmse_eskf_xy:.6f} m")
+    print(f"RMSE_GPS_xy: {rmse_gps_xy:.6f} m")
+    print(f"RMSE_ESKF_xy: {rmse_eskf_xy:.6f} m")
     return 0
 
 
