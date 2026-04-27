@@ -95,3 +95,5 @@ imu-gps-eskf.zip
 make_zip.sh
 .scratch
 AGENTS.md
+sync_eskf_docs_from_quarto_site.sh
+run.sh

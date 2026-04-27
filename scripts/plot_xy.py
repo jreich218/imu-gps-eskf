@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Generate a README-friendly XY trajectory overlay from eskf_sim_log.csv."""
+
+from __future__ import annotations
+
+import csv
+import math
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "matplotlib"))
+os.environ.setdefault("XDG_CACHE_HOME", str(Path(tempfile.gettempdir()) / "xdg-cache"))
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+
+REQUIRED_COLUMNS = (
+    "est_x",
+    "est_y",
+    "gps_x",
+    "gps_y",
+    "true_x",
+    "true_y",
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CSV_PATH = REPO_ROOT / "output" / "eskf_sim_log.csv"
+OUTPUT_PATH = REPO_ROOT / "output" / "xy_trajectory.png"
+
+
+def read_log(path: Path) -> dict[str, list[float]]:
+    if not path.exists():
+        raise FileNotFoundError(f"Input CSV not found: {path}")
+
+    series = {name: [] for name in REQUIRED_COLUMNS}
+
+    with path.open("r", newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        missing = [name for name in REQUIRED_COLUMNS if name not in (reader.fieldnames or [])]
+        if missing:
+            missing_txt = ", ".join(missing)
+            raise ValueError(f"CSV missing required columns: {missing_txt}")
+
+        for row in reader:
+            for name in REQUIRED_COLUMNS:
+                series[name].append(float(row[name]))
+
+    if not series["est_x"]:
+        raise ValueError(f"CSV has no data rows: {path}")
+
+    return series
+
+
+def rmse_xy(ax: list[float], ay: list[float], bx: list[float], by: list[float]) -> float:
+    if not (len(ax) == len(ay) == len(bx) == len(by)):
+        raise ValueError("RMSE input lengths do not match")
+
+    n = len(ax)
+    if n == 0:
+        raise ValueError("RMSE requires at least one sample")
+
+    sum_sq = 0.0
+    for i in range(n):
+        dx = ax[i] - bx[i]
+        dy = ay[i] - by[i]
+        sum_sq += dx * dx + dy * dy
+    return math.sqrt(sum_sq / n)
+
+
+def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float, float]:
+    est_x = series["est_x"]
+    est_y = series["est_y"]
+    gps_x = series["gps_x"]
+    gps_y = series["gps_y"]
+    true_x = series["true_x"]
+    true_y = series["true_y"]
+
+    rmse_gps_xy = rmse_xy(gps_x, gps_y, true_x, true_y)
+    rmse_eskf_xy = rmse_xy(est_x, est_y, true_x, true_y)
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.plot(true_x, true_y, label="Truth", color="#1f77b4", linewidth=2.2)
+    ax.scatter(gps_x, gps_y, label="GPS", color="#ff7f0e", s=16, alpha=0.65)
+    ax.plot(est_x, est_y, label="ESKF", color="#2ca02c", linewidth=2.0)
+
+    ax.scatter(true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
+    ax.scatter(true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)
+    ax.annotate(
+        "Start",
+        xy=(true_x[0], true_y[0]),
+        xytext=(8, 8),
+        textcoords="offset points",
+        fontsize=9,
+        ha="left",
+        va="bottom",
+    )
+    ax.annotate(
+        "Finish",
+        xy=(true_x[-1], true_y[-1]),
+        xytext=(8, -10),
+        textcoords="offset points",
+        fontsize=9,
+        ha="left",
+        va="top",
+    )
+
+    ax.text(
+        0.98,
+        0.02,
+        f"RMSE_GPS_xy: {rmse_gps_xy:.3f} m\nRMSE_ESKF_xy: {rmse_eskf_xy:.3f} m",
+        transform=ax.transAxes,
+        fontsize=10,
+        ha="right",
+        va="bottom",
+        bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.9, "edgecolor": "#bbbbbb"},
+    )
+
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_title("XY trajectory overlay")
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="best")
+    fig.tight_layout()
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    return rmse_gps_xy, rmse_eskf_xy
+
+
+def main() -> int:
+    try:
+        series = read_log(CSV_PATH)
+        rmse_gps_xy, rmse_eskf_xy = make_plot(series, OUTPUT_PATH)
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Wrote plot: {OUTPUT_PATH}")
+    print(f"RMSE_GPS_xy: {rmse_gps_xy:.6f} m")
+    print(f"RMSE_ESKF_xy: {rmse_eskf_xy:.6f} m")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
