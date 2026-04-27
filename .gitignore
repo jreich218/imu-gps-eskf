@@ -1,6 +1,3 @@
-imu-gps-eskf.zip
-make_zip.sh
-.scratch
 .context_refresh
 .context/
 .DS_Store
@@ -93,3 +90,8 @@ nuscenes_references/
 scenarios/nuscenes/*
 scenarios/scene_gps.json
 documentation/nuScenes/
+
+imu-gps-eskf.zip
+make_zip.sh
+.scratch
+AGENTS.md
