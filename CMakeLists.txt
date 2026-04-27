@@ -144,4 +144,26 @@ if(BUILD_TESTING)
 
   gtest_discover_tests(outputs_tests)
 
+  add_executable(app_integration_tests
+    tests/test_app_integration.cpp
+  )
+
+  add_dependencies(app_integration_tests imu-gps-eskf)
+
+  target_link_libraries(app_integration_tests PRIVATE
+    GTest::gtest_main
+    nlohmann_json::nlohmann_json
+  )
+
+  target_compile_definitions(app_integration_tests PRIVATE
+    IMU_GPS_ESKF_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+    IMU_GPS_ESKF_EXE_PATH="$<TARGET_FILE:imu-gps-eskf>"
+  )
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(app_integration_tests PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+
+  gtest_discover_tests(app_integration_tests)
+
 endif()
