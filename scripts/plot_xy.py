@@ -90,23 +90,23 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
 
     ax.scatter(true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
     ax.scatter(true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)
-    ax.annotate(
+    start_annotation = ax.annotate(
         "Start",
         xy=(true_x[0], true_y[0]),
-        xytext=(8, 8),
+        xytext=(0, 8),
         textcoords="offset points",
         fontsize=9,
         ha="left",
         va="bottom",
     )
-    ax.annotate(
+    finish_annotation = ax.annotate(
         "Finish",
         xy=(true_x[-1], true_y[-1]),
-        xytext=(8, -10),
+        xytext=(0, 0),
         textcoords="offset points",
         fontsize=9,
         ha="left",
-        va="top",
+        va="bottom",
     )
 
     ax.text(
@@ -123,10 +123,36 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
     ax.set_title("XY trajectory overlay")
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(ymin, 3.0 * ymax)
     ax.set_aspect("equal", adjustable="box")
     ax.grid(True, alpha=0.3)
     ax.legend(loc="best")
     fig.tight_layout()
+
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    axes_bbox = ax.get_window_extent(renderer=renderer)
+    start_bbox = start_annotation.get_window_extent(renderer=renderer)
+    target_start_x0_px = axes_bbox.x0 + 3.0
+    dx_px = target_start_x0_px - start_bbox.x0
+    start_x_pt, start_y_pt = start_annotation.get_position()
+    start_annotation.set_position(
+        (start_x_pt + dx_px * 72.0 / fig.dpi, start_y_pt))
+
+    finish_bbox = finish_annotation.get_window_extent(renderer=renderer)
+    finish_x_px, finish_y_px = ax.transData.transform((true_x[-1], true_y[-1]))
+    target_finish_x0_px = finish_x_px
+    target_finish_y0_px = finish_y_px + 20.0
+    finish_dx_px = target_finish_x0_px - finish_bbox.x0
+    finish_dy_px = target_finish_y0_px - finish_bbox.y0
+    finish_x_pt, finish_y_pt = finish_annotation.get_position()
+    finish_annotation.set_position(
+        (
+            finish_x_pt + finish_dx_px * 72.0 / fig.dpi,
+            finish_y_pt + finish_dy_px * 72.0 / fig.dpi,
+        ))
+    fig.canvas.draw()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=200, bbox_inches="tight")
