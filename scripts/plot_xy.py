@@ -88,8 +88,10 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     ax.scatter(gps_x, gps_y, label="GPS", color="#0F766E", s=16, alpha=0.65)
     ax.plot(est_x, est_y, label="ESKF", color="#0F4C81", linewidth=2.0)
 
-    ax.scatter(true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
-    ax.scatter(true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)
+    start_marker = ax.scatter(
+        true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
+    finish_marker = ax.scatter(
+        true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)
     start_annotation = ax.annotate(
         "Start",
         xy=(true_x[0], true_y[0]),
@@ -130,6 +132,21 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     ax.legend(loc="best")
     fig.tight_layout()
 
+    def marker_bbox_px(marker_collection):
+        path = marker_collection.get_paths()[0]
+        marker_to_px = marker_collection.get_transforms()[0]
+        marker_path_px = path.transformed(
+            matplotlib.transforms.Affine2D(marker_to_px))
+        path_bbox = marker_path_px.get_extents()
+        x_data, y_data = marker_collection.get_offsets()[0]
+        x_px, y_px = ax.transData.transform((float(x_data), float(y_data)))
+        return matplotlib.transforms.Bbox.from_extents(
+            path_bbox.x0 + x_px,
+            path_bbox.y0 + y_px,
+            path_bbox.x1 + x_px,
+            path_bbox.y1 + y_px,
+        )
+
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     axes_bbox = ax.get_window_extent(renderer=renderer)
@@ -152,6 +169,19 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
             finish_x_pt + finish_dx_px * 72.0 / fig.dpi,
             finish_y_pt + finish_dy_px * 72.0 / fig.dpi,
         ))
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+
+    finish_bbox = finish_annotation.get_window_extent(renderer=renderer)
+    finish_marker_bbox = marker_bbox_px(finish_marker)
+    start_bbox = start_annotation.get_window_extent(renderer=renderer)
+    start_marker_bbox = marker_bbox_px(start_marker)
+    finish_text_gap_px = finish_bbox.y0 - finish_marker_bbox.y1
+    target_start_y0_px = start_marker_bbox.y1 + finish_text_gap_px
+    start_dy_px = target_start_y0_px - start_bbox.y0
+    start_x_pt, start_y_pt = start_annotation.get_position()
+    start_annotation.set_position(
+        (start_x_pt, start_y_pt + start_dy_px * 72.0 / fig.dpi))
     fig.canvas.draw()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
