@@ -84,9 +84,9 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     rmse_eskf_xy = rmse_xy(est_x, est_y, true_x, true_y)
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.plot(true_x, true_y, label="Truth", color="#1f77b4", linewidth=2.2)
-    ax.scatter(gps_x, gps_y, label="GPS", color="#ff7f0e", s=16, alpha=0.65)
-    ax.plot(est_x, est_y, label="ESKF", color="#2ca02c", linewidth=2.0)
+    ax.plot(true_x, true_y, label="Truth", color="#111827", linewidth=2.2)
+    ax.scatter(gps_x, gps_y, label="GPS", color="#0F766E", s=16, alpha=0.65)
+    ax.plot(est_x, est_y, label="ESKF", color="#0F4C81", linewidth=2.0)
 
     ax.scatter(true_x[0], true_y[0], marker="o", s=55, color="black", zorder=5)
     ax.scatter(true_x[-1], true_y[-1], marker="X", s=70, color="black", zorder=5)

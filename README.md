@@ -1,4 +1,4 @@
-# IMU-GPS-ESKF
+# IMU/GPS ESKF
 
 ![XY trajectory overlay](output/xy_trajectory.png)
 
