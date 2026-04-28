@@ -147,3 +147,87 @@ TEST(RunEskfLoop, StartsFromStartupHandoffIndices) {
     EXPECT_DOUBLE_EQ(log_row.estimator_error_xy.y(), 0.0);
     EXPECT_DOUBLE_EQ(log_row.estimator_error_norm, 0.0);
 }
+
+TEST(RunEskfLoop, UpdatesAtGpsTimestampWhenGpsFallsInsideImuInterval) {
+    LoadedScene loaded_scene;
+    loaded_scene.pose_samples = {
+        MakePoseSample(50000, 0.05, 0.0),
+    };
+    loaded_scene.imu_samples = {
+        MakeImuSample(100000),
+    };
+
+    const std::vector<GpsSample> gps_samples = {
+        MakeGpsSample(50000, 0.05, 0.0),
+    };
+
+    StartupInitialization startup_initialization =
+        MakeStartupInitialization();
+    startup_initialization.v0_G = Eigen::Vector3d(1.0, 0.0, 0.0);
+
+    const EskfRunResult run_result =
+        RunEskfLoop(loaded_scene, gps_samples, startup_initialization);
+
+    ASSERT_EQ(run_result.log_rows.size(), 1U);
+    EXPECT_EQ(run_result.num_gps_updates, 1U);
+    EXPECT_DOUBLE_EQ(run_result.raw_gps_rmse_xy, 0.0);
+    EXPECT_DOUBLE_EQ(run_result.eskf_rmse_xy, 0.0);
+
+    const EskfLogRow& log_row = run_result.log_rows[0];
+    EXPECT_EQ(log_row.utime, 50000);
+    EXPECT_NEAR(log_row.estimated_position_G.x(), 0.05, 1e-12);
+    EXPECT_NEAR(log_row.estimated_position_G.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimated_position_G.z(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.gps_xy.x(), 0.05, 1e-12);
+    EXPECT_NEAR(log_row.gps_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.true_xy.x(), 0.05, 1e-12);
+    EXPECT_NEAR(log_row.true_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.innovation_xy.x(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.innovation_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.nis, 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_xy.x(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_norm, 0.0, 1e-12);
+}
+
+TEST(RunEskfLoop, UpdatesAfterPredictWhenGpsMatchesCurrentImuTimestamp) {
+    LoadedScene loaded_scene;
+    loaded_scene.pose_samples = {
+        MakePoseSample(100000, 0.1, 0.0),
+    };
+    loaded_scene.imu_samples = {
+        MakeImuSample(100000),
+    };
+
+    const std::vector<GpsSample> gps_samples = {
+        MakeGpsSample(100000, 0.1, 0.0),
+    };
+
+    StartupInitialization startup_initialization =
+        MakeStartupInitialization();
+    startup_initialization.v0_G = Eigen::Vector3d(1.0, 0.0, 0.0);
+
+    const EskfRunResult run_result =
+        RunEskfLoop(loaded_scene, gps_samples, startup_initialization);
+
+    ASSERT_EQ(run_result.log_rows.size(), 1U);
+    EXPECT_EQ(run_result.num_gps_updates, 1U);
+    EXPECT_DOUBLE_EQ(run_result.raw_gps_rmse_xy, 0.0);
+    EXPECT_DOUBLE_EQ(run_result.eskf_rmse_xy, 0.0);
+
+    const EskfLogRow& log_row = run_result.log_rows[0];
+    EXPECT_EQ(log_row.utime, 100000);
+    EXPECT_NEAR(log_row.estimated_position_G.x(), 0.1, 1e-12);
+    EXPECT_NEAR(log_row.estimated_position_G.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimated_position_G.z(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.gps_xy.x(), 0.1, 1e-12);
+    EXPECT_NEAR(log_row.gps_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.true_xy.x(), 0.1, 1e-12);
+    EXPECT_NEAR(log_row.true_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.innovation_xy.x(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.innovation_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.nis, 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_xy.x(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_xy.y(), 0.0, 1e-12);
+    EXPECT_NEAR(log_row.estimator_error_norm, 0.0, 1e-12);
+}
