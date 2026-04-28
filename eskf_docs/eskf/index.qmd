@@ -2,4 +2,66 @@
 title: "ESKF"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+This page records the estimator that runs after startup.
+
+## State
+
+The nominal state stores:
+
+- global position `p_G`
+- global velocity `v_G`
+- attitude quaternion `q_GI`
+
+The covariance is `9 x 9` over position, velocity, and attitude error.
+
+## Initialize
+
+`Initialize()` seeds the nominal state and covariance from `StartupInitialization`.
+
+After that, the filter is ready for live IMU and GPS data.
+
+## Predict
+
+`Predict()` advances the filter from the previous IMU timestamp to the current one.
+
+The predict step:
+
+- integrates angular velocity into `q_GI`
+- uses `q_AI` to express gravity in the current IMU frame
+- combines that gravity term with measured specific force to recover linear acceleration in frame `I`
+- rotates that acceleration into frame `G`
+- updates position and velocity
+- propagates the covariance with fixed accelerometer and gyro noise
+
+## GPS update
+
+`UpdateGps()` is a 2D horizontal position update in the global frame.
+
+The update step:
+
+- measures `[x, y]`
+- forms the horizontal innovation from the current nominal position
+- applies the correction to position, velocity, and attitude
+- returns the innovation and NIS for logging
+
+The current horizontal GPS measurement noise is `2.0 m` standard deviation in both `x` and `y`.
+
+## Live loop
+
+After startup, the app runs predict and update in timestamp order.
+
+For each post-startup IMU sample, the loop handles exactly one of three timing cases:
+
+- no GPS sample falls at or before the current IMU timestamp, so the loop only calls `Predict()`
+- one GPS sample falls strictly between the previous and current IMU timestamps, so the loop predicts to the GPS timestamp, updates and logs there, then predicts the remaining gap to the current IMU timestamp
+- one GPS sample lands exactly on the current IMU timestamp, so the loop predicts to that timestamp, then updates and logs there
+
+Supported inputs and synthetic GPS generation guarantee that at most one GPS sample can fall between contiguous IMU samples, so no other runtime timing case needs handling.
+
+Each GPS update:
+
+- looks up pose truth at the GPS timestamp
+- records one in-memory log row
+- accumulates raw-GPS and ESKF horizontal squared error
+
+The loop returns one row per GPS update together with the two horizontal RMSE values used by the output writers and the successful-run summary.

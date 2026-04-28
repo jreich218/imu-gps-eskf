@@ -23,6 +23,18 @@ body-classes: "cpp-api-page cpp-api-groups-page"
 
 [`ComputeStartupInitialization`](#compute-startup-initialization)
 :::
+
+::: {.cpp-api-function-index-group}
+[Runtime Loop]{.cpp-api-function-index-label}
+
+[`RunEskfLoop`](#run-eskf-loop)
+:::
+
+::: {.cpp-api-function-index-group}
+[Outputs]{.cpp-api-function-index-label}
+
+[`WriteGpsJson`](#write-gps-json) · [`WriteEskfSimLogCsv`](#write-eskf-sim-log-csv) · [`PrintRunSummary`](#print-run-summary)
+:::
 :::
 
 ## Scene I/O {#scene-io}
@@ -36,7 +48,7 @@ Select the pose and IMU files for the run.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L17">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L24">source</a></div>
 
 ```cpp
 SceneInputs ChooseSceneInputs();
@@ -47,6 +59,17 @@ SceneInputs ChooseSceneInputs();
 
 The chosen input file pair.
 
+#### Non-obvious behavior
+
+If exactly one matching `scene-XXXX_pose.json` /
+`scene-XXXX_ms_imu.json` pair is present under `scenarios`, that pair is
+used. Otherwise the bundled `scene_pose.json` and `scene_ms_imu.json` pair
+is used.
+
+#### Throws
+
+`std::runtime_error` If the bundled pair is needed but missing.
+
 ### `LoadScene` {#load-scene}
 
 Load the selected pose and IMU streams.
@@ -54,7 +77,7 @@ Load the selected pose and IMU streams.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L28">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L37">source</a></div>
 
 ```cpp
 LoadedScene LoadScene(const SceneInputs& scene_inputs);
@@ -74,6 +97,10 @@ Loaded pose and IMU samples.
 If exactly one final pose sample occurs after the last IMU sample, it is
 dropped during load.
 
+#### Throws
+
+`std::runtime_error` If either selected file cannot be opened.
+
 ## GPS Generation {#gps-generation}
 
 Generate synthetic GPS samples from pose samples.
@@ -85,7 +112,7 @@ Generate synthetic GPS samples from the loaded pose stream.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/gps_generation.hpp#L20">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/gps_generation.hpp#L24">source</a></div>
 
 ```cpp
 std::vector<GpsSample> GenerateGpsSamplesFromPose(
@@ -101,6 +128,12 @@ std::vector<GpsSample> GenerateGpsSamplesFromPose(
 
 Generated GPS samples.
 
+#### Non-obvious behavior
+
+The first pose sample is always kept. Later pose samples are kept only after
+at least `100 ms` have elapsed since the last kept sample. Each kept sample
+becomes one noisy horizontal GPS measurement in the global frame.
+
 ## Initialization {#initialization}
 
 Compute the startup state used to begin live filtering.
@@ -112,7 +145,7 @@ Compute the startup initialization from IMU and GPS samples.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L22">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L26">source</a></div>
 
 ```cpp
 std::optional<StartupInitialization> ComputeStartupInitialization(
@@ -128,4 +161,132 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
 
 #### Output
 
-The startup initialization, if one can be computed.
+The startup handoff state, or `std::nullopt` when startup never reaches a
+state suitable for handoff.
+
+#### Non-obvious behavior
+
+The returned object contains the initial state together with the first IMU
+and GPS indices that still belong to the live post-startup run.
+
+## Runtime Loop {#runtime-loop}
+
+Run the post-startup ESKF loop and collect in-memory results.
+
+### `RunEskfLoop` {#run-eskf-loop}
+
+Run the post-startup ESKF loop and collect the data needed for output
+writing.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/runtime_loop.hpp#L56">source</a></div>
+
+```cpp
+EskfRunResult RunEskfLoop(const LoadedScene& loaded_scene,
+                          const std::vector<GpsSample>& gps_samples,
+                          const StartupInitialization& startup_initialization);
+```
+:::
+
+#### Inputs
+
+- `loaded_scene`: Loaded pose and IMU streams.
+- `gps_samples`: Generated GPS samples.
+- `startup_initialization`: Startup state and handoff indices.
+
+#### Output
+
+In-memory log rows and RMSE summary values.
+
+#### Non-obvious behavior
+
+The returned rows match the eventual CSV content one row per GPS update.
+
+#### Throws
+
+`std::runtime_error` If a GPS update time has no matching pose sample, if no GPS updates are processed, or if the IMU stream ends before the last GPS update is handled.
+
+## Outputs {#outputs}
+
+Write run artifacts and the successful-run summary.
+
+### `WriteGpsJson` {#write-gps-json}
+
+Write the generated synthetic GPS samples to output/gps.json.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L25">source</a></div>
+
+```cpp
+std::filesystem::path WriteGpsJson(const std::vector<GpsSample>& gps_samples);
+```
+:::
+
+#### Inputs
+
+- `gps_samples`: GPS samples used during the run.
+
+#### Output
+
+Path of the written JSON file.
+
+#### Throws
+
+`std::runtime_error` If output/gps.json cannot be opened for writing.
+
+### `WriteEskfSimLogCsv` {#write-eskf-sim-log-csv}
+
+Write one CSV row per GPS update to output/eskf_sim_log.csv.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L36">source</a></div>
+
+```cpp
+std::filesystem::path WriteEskfSimLogCsv(const EskfRunResult& run_result);
+```
+:::
+
+#### Inputs
+
+- `run_result`: In-memory result from the runtime loop.
+
+#### Output
+
+Path of the written CSV file.
+
+#### Throws
+
+`std::runtime_error` If output/eskf_sim_log.csv cannot be opened for writing.
+
+### `PrintRunSummary` {#print-run-summary}
+
+Print the successful-run summary.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L48">source</a></div>
+
+```cpp
+void PrintRunSummary(const EskfRunResult& run_result,
+                     const std::filesystem::path& log_path,
+                     std::ostream& out);
+```
+:::
+
+#### Inputs
+
+- `run_result`: In-memory result from the runtime loop.
+- `log_path`: Path of the written CSV log.
+- `out`: Stream to receive the summary.
+
+#### Non-obvious behavior
+
+The summary reports the number of GPS updates, the raw GPS horizontal RMSE,
+the ESKF horizontal RMSE, and the written log path.

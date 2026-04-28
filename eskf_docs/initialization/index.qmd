@@ -2,4 +2,68 @@
 title: "Initialization"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+This page records how startup builds the handoff state for the live filter.
+
+## Purpose
+
+Startup uses early IMU and synthetic GPS samples to produce one `StartupInitialization` object.
+
+That object contains:
+
+- `p0_G`
+- `v0_G`
+- `q0_GI`
+- `previous_imu_utime`
+- `first_unprocessed_imu_index`
+- `first_unprocessed_gps_index`
+
+The live filter begins from that handoff state.
+
+## Where startup begins
+
+Startup begins on the IMU time axis.
+
+GPS samples earlier than the first IMU sample are ignored.
+
+Startup needs at least three usable GPS samples. If no trustworthy handoff state is found, startup returns `std::nullopt`.
+
+## GPS path fit
+
+Startup grows a GPS window one sample at a time.
+
+For each candidate window, it fits quadratic `x(t)` and `y(t)` paths in a local time coordinate whose zero is the window end.
+
+That fit supplies:
+
+- the ready position at the window end
+- the local tangent velocity at the window end
+
+Windows are skipped when the endpoint speed is too small or when the projected start-to-end separation is still too small.
+
+## Heading
+
+Startup forms a local tangent heading from the fitted path.
+
+It also forms a global heading from the GPS cloud principal direction, using IMU yaw change to make that heading curvature-aware when the GPS cloud is not line-like.
+
+The startup yaw is a blend of those two headings.
+
+## Speed
+
+Startup forms a recent local speed from the fitted path.
+
+It also forms a global speed over the recent window.
+
+The startup speed is a blend of those two speeds.
+
+## IMU handoff
+
+Once startup has a ready 2D state, it carries that state forward to the first IMU sample at or after the ready time.
+
+That handoff step:
+
+- carries position forward across the gap using the ready velocity
+- carries yaw forward across the gap using IMU yaw change
+- builds `q0_GI` from the carried global yaw and the handoff IMU sample's `q_AI`
+
+The returned `StartupInitialization` is the exact handoff used by the live loop.

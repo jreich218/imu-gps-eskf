@@ -2,4 +2,42 @@
 title: "Synthetic GPS"
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+This page records how `IMU-GPS-ESKF` turns the loaded pose stream into the synthetic GPS stream used by startup and update.
+
+## Output type
+
+The generated stream consists of `GpsSample` records. Each record stores:
+
+- the kept pose timestamp
+- a noisy horizontal position measurement in the global frame
+
+Only `x` and `y` are kept.
+
+## Sampling rule
+
+The generator walks the loaded pose stream in timestamp order.
+
+- the first pose sample is always kept
+- each later pose sample is kept only after at least `100 ms` have elapsed since the last kept sample
+
+The output timestamp is copied from the kept pose sample.
+
+## Noise model
+
+Each kept pose sample becomes one noisy horizontal position measurement.
+
+The current implementation adds independent zero-mean Gaussian noise to `x` and `y`.
+
+The current constants are:
+
+- `sigma = 2.0 m`
+- fixed seed `1234`
+
+So for a fixed pose stream, the generated GPS stream is deterministic across runs.
+
+## Role in the app
+
+The generated GPS stream is used twice:
+
+- startup uses the early samples to form the initial handoff state
+- the live filter uses the remaining samples for 2D GPS updates
