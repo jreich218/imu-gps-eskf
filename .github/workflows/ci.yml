@@ -26,7 +26,9 @@ jobs:
             pkg-config \
             libeigen3-dev \
             nlohmann-json3-dev \
-            libgtest-dev
+            libgtest-dev \
+            python3 \
+            python3-venv
 
       - name: Configure CMake
         run: cmake -S . -B build -DBUILD_TESTING=ON
@@ -37,5 +39,5 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build --output-on-failure
 
-      - name: Run app
-        run: ./build/imu-gps-eskf
+      - name: Check plot asset
+        run: ./scripts/check_plot_asset.sh
