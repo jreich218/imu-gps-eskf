@@ -2,9 +2,13 @@
 
 [![CI](https://github.com/jreich218/imu-gps-eskf/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/jreich218/imu-gps-eskf/actions/workflows/ci.yml)
 
-![XY trajectory overlay](assets/xy_trajectory.png)
+This C++/Eigen IMU/GPS ESKF baseline for ego-state estimation can run on bundled simulated data in `scenarios` or on user-downloaded nuScenes CAN-bus data.
 
-A C++/Eigen IMU/GPS ESKF baseline for ego-state estimation.
+Across all 979 nuScenes CAN-bus scenes, this baseline completed 973 and reduced median horizontal RMSE from 2.98524 m for raw GPS to 0.974062 m for the ESKF, beating raw GPS on 972 of the 973 completed runs. The six failed scenes are conservative startup refusals: in those cases the early drive never moved far enough, relative to GPS noise, to support a trustworthy initial heading and speed estimate.
+
+The trajectory for the run on the bundled data is shown below.
+
+![XY trajectory overlay](assets/xy_trajectory.png)
 
 ## What is in this repo
 
