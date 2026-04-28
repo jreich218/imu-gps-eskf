@@ -91,6 +91,7 @@ scenarios/nuscenes/*
 scenarios/scene_gps.json
 documentation/nuScenes/
 
+output/
 imu-gps-eskf.zip
 make_zip.sh
 .scratch

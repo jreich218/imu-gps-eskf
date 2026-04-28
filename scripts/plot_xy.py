@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 
 CSV_PATH = Path("/home/dfw/dev/imu-gps-eskf/output/eskf_sim_log.csv")
-OUTPUT_PATH = Path("/home/dfw/dev/imu-gps-eskf/output/xy_trajectory.png")
+OUTPUT_PATH = Path("/home/dfw/dev/imu-gps-eskf/assets/xy_trajectory.png")
 
 REQUIRED_COLUMNS = (
     "est_x",
