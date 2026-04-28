@@ -6,16 +6,31 @@ A C++/Eigen IMU/GPS ESKF baseline for ego-state estimation, written in collabora
 
 ## What is in this repo
 
-- A C++ ESKF with deterministic initialization, IMU prediction, and 2D GPS updates.
-- In-process GPS generation from pose data.
-- A bundled pose/IMU pair so the app runs out of the box.
+- A C++ ESKF over position, velocity, and attitude.
+- Synthetic 2D GPS generation from pose data.
+- Startup initialization from early IMU and synthetic GPS samples.
+- A bundled pose/IMU pair so the app runs out of the box, plus support for a single matching nuScenes scene pair.
 - Unit tests and an end-to-end integration test.
 
-## Supported inputs and preparing your run
+## Project docs
 
-If you'd like to use the simulation-built data bundled with this repo, then the project can be built and run as is.
+- [Overview](https://jasonmreich.com/eskf_docs/)
+- [Inputs](https://jasonmreich.com/eskf_docs/inputs/)
+- [Synthetic GPS](https://jasonmreich.com/eskf_docs/synthetic_gps/)
+- [Initialization](https://jasonmreich.com/eskf_docs/initialization/)
+- [ESKF](https://jasonmreich.com/eskf_docs/eskf/)
+- [Outputs](https://jasonmreich.com/eskf_docs/outputs/)
+- [API](https://jasonmreich.com/eskf_docs/api/)
 
-This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and `scene-XXXX_pose.json` / `scene-XXXX_ms_imu.json` pairs from the nuScenes CAN bus data published February 2020 by nuScenes [which you have to download separately from this repo]. No nuScenes data is shipped here. See [the input files docs](https://jasonmreich.com/eskf_docs/reference/input-files) for more details if you plan on using your own copy of the nuScenes CAN bus data.
+## Supported inputs
+
+If you'd like to use the bundled simulated pair, the project can be built and run as is.
+
+This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and `scene-XXXX_pose.json` / `scene-XXXX_ms_imu.json` pairs from the nuScenes CAN bus data published in February 2020 by nuScenes. No nuScenes data is shipped here.
+
+If exactly one matching nuScenes pair is present under `scenarios/`, the app uses that pair. Otherwise it uses the bundled pair.
+
+See [Inputs](https://jasonmreich.com/eskf_docs/inputs/) for details on filenames, runtime selection, schemas, and time properties.
 
 ## Disclaimers
 
@@ -39,7 +54,7 @@ The local package-install commands below assume Debian or Ubuntu.
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y cmake g++ libeigen3-dev nlohmann-json3-dev
+sudo apt-get install -y cmake g++ libeigen3-dev nlohmann-json3-dev libgtest-dev
 ```
 
 Run this from the repo root:
@@ -47,6 +62,8 @@ Run this from the repo root:
 ```bash
 ./dev.sh
 ```
+
+`./dev.sh` configures the build, builds the app, runs the test suite, and then launches the app.
 
 ### 2. Build in a dev container
 
@@ -70,3 +87,4 @@ Visual Studio Code should open the terminal there automatically.
 - The main output is `output/eskf_sim_log.csv`. Each row is one GPS update. It records the timestamp, the filter position estimate, the GPS measurement, the reference pose, the GPS innovation, the NIS, and the resulting position error so you can inspect how the filter behaved over the run.
 - The app also prints a short run summary to stdout, including the number of GPS updates and the xy RMSE for raw GPS and for the ESKF.
 - The app creates and uses synthetic GPS data at runtime from the selected pose stream. The generated samples are written to `output/gps.json` for optional inspection.
+- `scripts/plot_xy.py` reads `output/eskf_sim_log.csv` and writes `assets/xy_trajectory.png`.
