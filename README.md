@@ -1,5 +1,7 @@
 # IMU/GPS Error-State Kalman Filter
 
+[![CI](https://github.com/jreich218/imu-gps-eskf/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/jreich218/imu-gps-eskf/actions/workflows/ci.yml)
+
 ![XY trajectory overlay](assets/xy_trajectory.png)
 
 A C++/Eigen IMU/GPS ESKF baseline for ego-state estimation, written in collaboration with ChatGPT.
