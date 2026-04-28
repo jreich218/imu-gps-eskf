@@ -4,7 +4,7 @@
 
 ![XY trajectory overlay](assets/xy_trajectory.png)
 
-A C++/Eigen IMU/GPS ESKF baseline for ego-state estimation, written in collaboration with ChatGPT.
+A C++/Eigen IMU/GPS ESKF baseline for ego-state estimation.
 
 ## What is in this repo
 
@@ -33,13 +33,6 @@ This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and 
 If exactly one matching nuScenes pair is present under `scenarios/`, the app uses that pair. Otherwise it uses the bundled pair.
 
 See [Inputs](https://jasonmreich.com/eskf_docs/inputs/) for details on filenames, runtime selection, schemas, and time properties.
-
-## Disclaimers
-
-- This repository is an educational demo only, it is not for safety-critical use.
-- This project is not affiliated with, endorsed by, or sponsored by nuScenes or Motional.
-- No nuScenes/Motional data or content is included or redistributed here.
-- A Python simulation was built to create synthetic data for this project. The synthetic data is included in `scenarios` and is sufficient for running all of the code in this repo.
 
 ## Build and run
 
@@ -90,3 +83,11 @@ Visual Studio Code should open the terminal there automatically.
 - The app also prints a short run summary to stdout, including the number of GPS updates and the xy RMSE for raw GPS and for the ESKF.
 - The app creates and uses synthetic GPS data at runtime from the selected pose stream. The generated samples are written to `output/gps.json` for optional inspection.
 - `scripts/plot_xy.py` reads `output/eskf_sim_log.csv` and writes `assets/xy_trajectory.png`.
+
+## Disclaimers
+
+- This project and its docs were written in collaboration with ChatGPT.
+- This repository is an educational demo only, it is not for safety-critical use.
+- This project is not affiliated with, endorsed by, or sponsored by nuScenes or Motional.
+- No nuScenes/Motional data or content is included or redistributed here.
+- A Python simulation was built to create synthetic data for this project. The synthetic data is included in `scenarios` and is sufficient for running all of the code in this repo.
