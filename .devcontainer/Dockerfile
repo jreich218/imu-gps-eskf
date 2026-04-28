@@ -17,10 +17,10 @@ ENV VENV=/opt/venv
 RUN python3 -m venv $VENV
 ENV PATH="$VENV/bin:$PATH"
 
-COPY requirements.txt /tmp/requirements.txt
+COPY scripts/requirements-plot.txt /tmp/requirements-plot.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install --upgrade pip && \
-  pip install -r /tmp/requirements.txt && \
-  rm -f /tmp/requirements.txt
+  pip install -r /tmp/requirements-plot.txt && \
+  rm -f /tmp/requirements-plot.txt
 
 USER vscode

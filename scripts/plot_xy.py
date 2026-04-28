@@ -6,20 +6,32 @@ import csv
 import math
 import os
 import sys
-import tempfile
 from pathlib import Path
 
-os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "matplotlib"))
-os.environ.setdefault("XDG_CACHE_HOME", str(Path(tempfile.gettempdir()) / "xdg-cache"))
+REPO_ROOT = Path(__file__).resolve().parents[1]
+PLOT_CONFIG_DIR = REPO_ROOT / "output" / ".plot_xy_cache"
+PLOT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+os.environ.setdefault("MPLCONFIGDIR", str(PLOT_CONFIG_DIR / "matplotlib"))
+os.environ.setdefault("XDG_CACHE_HOME", str(PLOT_CONFIG_DIR / "xdg-cache"))
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+matplotlib.rcParams.update(
+    {
+        "font.family": "DejaVu Sans",
+        "figure.dpi": 100,
+        "savefig.dpi": 200,
+        "savefig.facecolor": "white",
+        "savefig.edgecolor": "white",
+    }
+)
 
-CSV_PATH = Path("/home/dfw/dev/imu-gps-eskf/output/eskf_sim_log.csv")
-OUTPUT_PATH = Path("/home/dfw/dev/imu-gps-eskf/assets/xy_trajectory.png")
+CSV_PATH = REPO_ROOT / "output" / "eskf_sim_log.csv"
+OUTPUT_PATH = REPO_ROOT / "assets" / "xy_trajectory.png"
 
 REQUIRED_COLUMNS = (
     "est_x",
@@ -280,7 +292,7 @@ def make_plot(series: dict[str, list[float]], output_path: Path) -> tuple[float,
     fig.canvas.draw()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    fig.savefig(output_path, dpi=200, bbox_inches="tight", metadata={})
     plt.close(fig)
 
     return rmse_gps_xy, rmse_eskf_xy
