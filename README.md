@@ -4,7 +4,7 @@
 
 This C++/Eigen IMU/GPS ESKF baseline for ego-state estimation can run on bundled simulated data in `scenarios` or on user-downloaded nuScenes CAN-bus data.
 
-Across all 979 nuScenes CAN-bus scenes, this baseline completed 973 scenes. For those 973 scenes, it reduced median horizontal RMSE from 2.98524 m for raw GPS to 0.974062 m for the ESKF, beating raw GPS in 972 of the 973 cases. The six failed scenes are conservative startup refusals: in those cases the early drive never moved far enough, relative to GPS noise, to support a trustworthy initial heading and speed estimate. A discussion on why this is to be expected for an IMU/GPS only baseline, and the full stats, are in the [project docs](https://jasonmreich.com/eskf_docs/initialization/).
+Across all 979 nuScenes CAN-bus scenes, this baseline completed 973 scenes. For those 973 scenes, it reduced median horizontal RMSE from 2.98524 m for raw GPS to 0.974062 m for the ESKF, beating raw GPS in 972 of the 973 cases. The [overview](https://jasonmreich.com/eskf_docs/) page of the project docs has the details for these stats. The six failed scenes are conservative startup refusals: in those cases the early drive never moved far enough, relative to GPS noise, to support a trustworthy initial heading and speed estimate. A discussion on why this is to be expected for an IMU/GPS only baseline, along with a sample plot for one of the non-completing scenes, can be found on the [initialization](https://jasonmreich.com/eskf_docs/initialization/) page of the project docs.
 
 The trajectory for the run on the bundled data is shown below.
 
