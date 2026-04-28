@@ -7,12 +7,6 @@
 
 #include "scene_types.hpp"
 
-/**
- * @defgroup RuntimeLoop Runtime Loop
- * @brief Run the post-startup ESKF loop and collect in-memory results.
- * @{
- */
-
 /// One in-memory log row corresponding to one GPS update.
 struct EskfLogRow {
     std::int64_t utime = 0;  ///< GPS update timestamp in microseconds.
@@ -39,6 +33,12 @@ struct EskfRunResult {
 };
 
 /**
+ * @defgroup RuntimeLoop Runtime Loop
+ * @brief Run the post-startup ESKF loop and collect in-memory results.
+ * @{
+ */
+
+/**
  * @brief Run the post-startup ESKF loop and collect the data needed for
  * output writing.
  *
@@ -48,6 +48,10 @@ struct EskfRunResult {
  * @param gps_samples Generated GPS samples.
  * @param startup_initialization Startup state and handoff indices.
  * @return In-memory log rows and RMSE summary values.
+ *
+ * @throws std::runtime_error If a GPS update time has no matching pose
+ *     sample, if no GPS updates are processed, or if the IMU stream ends
+ *     before the last GPS update is handled.
  */
 EskfRunResult RunEskfLoop(const LoadedScene& loaded_scene,
                           const std::vector<GpsSample>& gps_samples,

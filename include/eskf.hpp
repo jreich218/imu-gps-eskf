@@ -20,6 +20,9 @@ class Eskf {
     /**
      * @brief Initialize the filter from the startup initialization.
      *
+     * This seeds the nominal state and covariance for the first live
+     * IMU/GPS updates after startup.
+     *
      * @param startup_initialization Startup state used to begin filtering.
      */
     void Initialize(const StartupInitialization& startup_initialization);
@@ -30,6 +33,10 @@ class Eskf {
      *
      * @param current_imu_sample Current IMU sample k used for propagation from
      *     t_{k-1} to t_k.
+     *
+     * @pre Initialize() has been called.
+     *
+     * @throws std::runtime_error If the filter is not initialized.
      */
     void Predict(const ImuSample& current_imu_sample);
 
@@ -38,6 +45,12 @@ class Eskf {
      *
      * @param gps_sample GPS measurement at the current update time.
      * @return Innovation and NIS from this GPS update.
+     *
+     * @pre Initialize() has been called.
+     *
+     * @throws std::runtime_error If the filter is not initialized, if the
+     *     innovation covariance cannot be factorized, or if the state
+     *     covariance becomes numerically invalid during the update.
      */
     GpsUpdateResult UpdateGps(const GpsSample& gps_sample);
 
@@ -45,6 +58,10 @@ class Eskf {
      * @brief Get the current nominal position in frame G.
      *
      * @return Current nominal position in frame G.
+     *
+     * @pre Initialize() has been called.
+     *
+     * @throws std::runtime_error If the filter is not initialized.
      */
     const Eigen::Vector3d& PositionG() const;
 

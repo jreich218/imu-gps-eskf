@@ -12,7 +12,14 @@
 /**
  * @brief Select the pose and IMU files for the run.
  *
+ * If exactly one matching `scene-XXXX_pose.json` /
+ * `scene-XXXX_ms_imu.json` pair is present under `scenarios`, that pair is
+ * used. Otherwise the bundled `scene_pose.json` and `scene_ms_imu.json` pair
+ * is used.
+ *
  * @return The chosen input file pair.
+ *
+ * @throws std::runtime_error If the bundled pair is needed but missing.
  */
 SceneInputs ChooseSceneInputs();
 
@@ -24,6 +31,8 @@ SceneInputs ChooseSceneInputs();
  *
  * @param scene_inputs Selected pose and IMU file paths.
  * @return Loaded pose and IMU samples.
+ *
+ * @throws std::runtime_error If either selected file cannot be opened.
  */
 LoadedScene LoadScene(const SceneInputs& scene_inputs);
 

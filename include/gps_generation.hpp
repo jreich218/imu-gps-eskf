@@ -14,6 +14,10 @@
 /**
  * @brief Generate synthetic GPS samples from the loaded pose stream.
  *
+ * The first pose sample is always kept. Later pose samples are kept only after
+ * at least `100 ms` have elapsed since the last kept sample. Each kept sample
+ * becomes one noisy horizontal GPS measurement in the global frame.
+ *
  * @param pose_samples Loaded pose samples.
  * @return Generated GPS samples.
  */
