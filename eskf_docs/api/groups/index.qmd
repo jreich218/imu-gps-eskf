@@ -57,22 +57,24 @@ SceneInputs ChooseSceneInputs();
 
 #### Output
 
-The chosen input file pair.
+The chosen pose and IMU file paths for the active input set.
 
 #### Non-obvious behavior
 
-If exactly one matching `scene-XXXX_pose.json` /
-`scene-XXXX_ms_imu.json` pair is present under `scenarios`, that pair is
-used. Otherwise the bundled `scene_pose.json` and `scene_ms_imu.json` pair
-is used.
+If exactly one matching nuScenes input set is present under `scenarios`,
+`ChooseSceneInputs()` returns that scene's `scene-XXXX_pose.json` and
+`scene-XXXX_ms_imu.json` paths, and `LoadScene()` later loads the matching
+`scene-XXXX_zoe_veh_info.json` file. Otherwise it returns the bundled
+`scene_pose.json` and `scene_ms_imu.json` paths, and `LoadScene()` later
+loads `scene_zoe_veh_info.json`.
 
 #### Throws
 
-`std::runtime_error` If the bundled pair is needed but missing.
+`std::runtime_error` If the bundled set is needed but missing.
 
 ### `LoadScene` {#load-scene}
 
-Load the selected pose and IMU streams.
+Load the selected pose, IMU, and wheel-speed streams.
 
 #### Signature
 

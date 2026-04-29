@@ -40,7 +40,7 @@ The supported nuScenes operating set is the `876` scene IDs listed in `metadata/
 
 That manifest was produced from the current app behavior and the offline post-pruning procedure described on [Inputs](https://jasonmreich.com/eskf_docs/inputs/).
 
-If exactly one matching nuScenes pose/IMU pair is present under `scenarios/`, the app uses that scene and loads the matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled set.
+If exactly one matching nuScenes input set is present under `scenarios/`, the app uses that scene's `scene-XXXX_pose.json`, `scene-XXXX_ms_imu.json`, and matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled set.
 
 The app does not check scene membership at runtime. You are expected to supply only scene IDs from the supported-scene manifest.
 
