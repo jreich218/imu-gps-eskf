@@ -1,14 +1,18 @@
 #include "gps_generation.hpp"
 #include "scene_types.hpp"
 
+#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include <Eigen/Geometry>
 #include <gtest/gtest.h>
 
 namespace {
+
+constexpr const char* kGpsSeedEnvVar = "IMU_GPS_ESKF_GPS_SEED";
 
 PoseSample MakePoseSample(std::int64_t utime, double x, double y) {
   PoseSample pose_sample;
@@ -18,6 +22,29 @@ PoseSample MakePoseSample(std::int64_t utime, double x, double y) {
   pose_sample.vel = Eigen::Vector3d(1.0, 0.0, 0.0);
   return pose_sample;
 }
+
+class ScopedGpsSeedEnvVar {
+ public:
+  ScopedGpsSeedEnvVar() {
+    const char* previous = std::getenv(kGpsSeedEnvVar);
+    if (previous != nullptr) {
+      had_previous_value_ = true;
+      previous_value_ = previous;
+    }
+  }
+
+  ~ScopedGpsSeedEnvVar() {
+    if (had_previous_value_) {
+      setenv(kGpsSeedEnvVar, previous_value_.c_str(), 1);
+    } else {
+      unsetenv(kGpsSeedEnvVar);
+    }
+  }
+
+ private:
+  bool had_previous_value_ = false;
+  std::string previous_value_;
+};
 
 }  // namespace
 
@@ -106,4 +133,43 @@ TEST(GenerateGpsSamplesFromPose, Uniform20msPoseStreamProducesEveryFifthSample) 
   EXPECT_EQ(gps_samples[1].utime, kBaseUtime + 5 * kPoseDtUs);
   EXPECT_EQ(gps_samples[2].utime, kBaseUtime + 10 * kPoseDtUs);
   EXPECT_EQ(gps_samples[3].utime, kBaseUtime + 15 * kPoseDtUs);
+}
+
+TEST(GenerateGpsSamplesFromPose, UsesSeedOverrideWhenProvided) {
+  ScopedGpsSeedEnvVar scoped_env_var;
+
+  const std::vector<PoseSample> pose_samples = {
+      MakePoseSample(1000000, 0.0, 0.0),
+      MakePoseSample(1100000, 1.0, 0.5),
+      MakePoseSample(1200000, 2.0, 1.0),
+      MakePoseSample(1300000, 3.0, 1.5),
+      MakePoseSample(1400000, 4.0, 2.0),
+  };
+
+  setenv(kGpsSeedEnvVar, "1", 1);
+  const std::vector<GpsSample> gps_samples_seed_1_a =
+      GenerateGpsSamplesFromPose(pose_samples);
+  const std::vector<GpsSample> gps_samples_seed_1_b =
+      GenerateGpsSamplesFromPose(pose_samples);
+
+  setenv(kGpsSeedEnvVar, "2", 1);
+  const std::vector<GpsSample> gps_samples_seed_2 =
+      GenerateGpsSamplesFromPose(pose_samples);
+
+  ASSERT_EQ(gps_samples_seed_1_a.size(), gps_samples_seed_1_b.size());
+  ASSERT_EQ(gps_samples_seed_1_a.size(), gps_samples_seed_2.size());
+
+  bool found_difference = false;
+  for (std::size_t i = 0; i < gps_samples_seed_1_a.size(); ++i) {
+    EXPECT_EQ(gps_samples_seed_1_a[i].utime, gps_samples_seed_1_b[i].utime);
+    EXPECT_DOUBLE_EQ(gps_samples_seed_1_a[i].xy.x(), gps_samples_seed_1_b[i].xy.x());
+    EXPECT_DOUBLE_EQ(gps_samples_seed_1_a[i].xy.y(), gps_samples_seed_1_b[i].xy.y());
+
+    if (gps_samples_seed_1_a[i].xy.x() != gps_samples_seed_2[i].xy.x() ||
+        gps_samples_seed_1_a[i].xy.y() != gps_samples_seed_2[i].xy.y()) {
+      found_difference = true;
+    }
+  }
+
+  EXPECT_TRUE(found_difference);
 }

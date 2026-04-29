@@ -1,5 +1,6 @@
 #include "gps_generation.hpp"
 
+#include <cstdlib>
 #include <cstdint>
 #include <random>
 
@@ -9,13 +10,29 @@ namespace {
 
 constexpr std::int64_t kMinGpsDtUs = 100000;
 constexpr double kGpsSigmaXY = 2.0;
-constexpr unsigned int kGpsSeed = 1234;
+constexpr unsigned int kDefaultGpsSeed = 1234;
+constexpr const char* kGpsSeedEnvVar = "IMU_GPS_ESKF_GPS_SEED";
+
+unsigned int GpsSeed() {
+    const char* env_value = std::getenv(kGpsSeedEnvVar);
+    if (env_value == nullptr || env_value[0] == '\0') {
+        return kDefaultGpsSeed;
+    }
+
+    char* parse_end = nullptr;
+    const unsigned long parsed = std::strtoul(env_value, &parse_end, 10);
+    if (parse_end == env_value || (parse_end != nullptr && parse_end[0] != '\0')) {
+        return kDefaultGpsSeed;
+    }
+
+    return static_cast<unsigned int>(parsed);
+}
 
 }  // namespace
 
 std::vector<GpsSample> GenerateGpsSamplesFromPose(
     const std::vector<PoseSample>& pose_samples) {
-    std::mt19937 rng(kGpsSeed);
+    std::mt19937 rng(GpsSeed());
     std::normal_distribution<double> standard_normal(0.0, 1.0);
 
     std::vector<GpsSample> gps_samples;

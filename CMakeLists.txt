@@ -33,6 +33,46 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
   target_compile_options(imu-gps-eskf PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+add_executable(dump_startup_trace
+  include/initialization.hpp
+  include/scene_io.hpp
+  include/scene_types.hpp
+  include/gps_generation.hpp
+  src/dump_startup_trace.cpp
+  src/initialization.cpp
+  src/scene_io.cpp
+  src/gps_generation.cpp
+)
+
+target_include_directories(dump_startup_trace PRIVATE include)
+target_link_libraries(dump_startup_trace PRIVATE
+  Eigen3::Eigen
+  nlohmann_json::nlohmann_json
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  target_compile_options(dump_startup_trace PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+add_executable(dump_truth_max_radius
+  include/scene_io.hpp
+  include/scene_types.hpp
+  include/gps_generation.hpp
+  src/dump_truth_max_radius.cpp
+  src/scene_io.cpp
+  src/gps_generation.cpp
+)
+
+target_include_directories(dump_truth_max_radius PRIVATE include)
+target_link_libraries(dump_truth_max_radius PRIVATE
+  Eigen3::Eigen
+  nlohmann_json::nlohmann_json
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  target_compile_options(dump_truth_max_radius PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 include(CTest)
 
 if(BUILD_TESTING)

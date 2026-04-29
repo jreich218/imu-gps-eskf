@@ -24,13 +24,14 @@
 SceneInputs ChooseSceneInputs();
 
 /**
- * @brief Load the selected pose and IMU streams.
+ * @brief Load the selected pose, IMU, and wheel-speed streams.
  *
  * If exactly one final pose sample occurs after the last IMU sample, it is
- * dropped during load.
+ * dropped during load. For nuScenes scene pairs, the sibling
+ * `scene-XXXX_zoe_veh_info.json` file is loaded from the same directory.
  *
  * @param scene_inputs Selected pose and IMU file paths.
- * @return Loaded pose and IMU samples.
+ * @return Loaded pose, IMU, and wheel-speed samples.
  *
  * @throws std::runtime_error If either selected file cannot be opened.
  */

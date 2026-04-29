@@ -38,10 +38,21 @@ struct ImuSample {
         0.0};  ///< Quaternion from frame I to gravity-aligned frame A.
 };
 
-/// Loaded reference-pose and IMU streams.
+/// One wheel-speed CAN sample from `zoe_veh_info`.
+struct WheelSpeedSample {
+    std::int64_t utime = 0;  ///< Timestamp in microseconds.
+    double fl_wheel_speed_rpm = 0.0;  ///< Front-left wheel speed in rpm.
+    double fr_wheel_speed_rpm = 0.0;  ///< Front-right wheel speed in rpm.
+    double rl_wheel_speed_rpm = 0.0;  ///< Rear-left wheel speed in rpm.
+    double rr_wheel_speed_rpm = 0.0;  ///< Rear-right wheel speed in rpm.
+};
+
+/// Loaded reference-pose, IMU, and wheel-speed streams.
 struct LoadedScene {
     std::vector<PoseSample> pose_samples;  ///< Loaded pose samples.
     std::vector<ImuSample> imu_samples;    ///< Loaded IMU samples.
+    std::vector<WheelSpeedSample>
+        wheel_speed_samples;  ///< Loaded wheel-speed samples.
 };
 
 /// One synthetic 2D GPS sample.

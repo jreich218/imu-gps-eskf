@@ -19,7 +19,9 @@ int main() {
             GenerateGpsSamplesFromPose(loaded_scene.pose_samples);
 
         const std::optional<StartupInitialization> startup_initialization =
-            ComputeStartupInitialization(loaded_scene.imu_samples, gps_samples);
+            ComputeStartupInitialization(loaded_scene.imu_samples,
+                                         gps_samples,
+                                         loaded_scene.wheel_speed_samples);
         if (!startup_initialization.has_value()) {
             throw std::runtime_error(
                 "Could not compute startup initialization.");

@@ -141,6 +141,50 @@ std::vector<ImuSample> LoadImuSamples(const Json& json) {
     return imu_samples;
 }
 
+std::vector<WheelSpeedSample> LoadWheelSpeedSamples(const Json& json) {
+    std::vector<WheelSpeedSample> wheel_speed_samples;
+    wheel_speed_samples.reserve(json.size());
+
+    for (const auto& entry : json) {
+        WheelSpeedSample wheel_speed_sample;
+        wheel_speed_sample.utime = entry.at("utime").get<std::int64_t>();
+        wheel_speed_sample.fl_wheel_speed_rpm =
+            entry.at("FL_wheel_speed").get<double>();
+        wheel_speed_sample.fr_wheel_speed_rpm =
+            entry.at("FR_wheel_speed").get<double>();
+        wheel_speed_sample.rl_wheel_speed_rpm =
+            entry.at("RL_wheel_speed").get<double>();
+        wheel_speed_sample.rr_wheel_speed_rpm =
+            entry.at("RR_wheel_speed").get<double>();
+        wheel_speed_samples.push_back(wheel_speed_sample);
+    }
+
+    return wheel_speed_samples;
+}
+
+fs::path MatchingWheelSpeedPath(const SceneInputs& scene_inputs) {
+    const std::string pose_name = scene_inputs.pose_path.filename().string();
+    const std::string imu_name = scene_inputs.imu_path.filename().string();
+
+    const auto pose_scene_number = PoseSceneNumber(pose_name);
+    const auto imu_scene_number = ImuSceneNumber(imu_name);
+    if (!pose_scene_number.has_value() || !imu_scene_number.has_value() ||
+        *pose_scene_number != *imu_scene_number) {
+        throw std::runtime_error(
+            "LoadScene requires a nuScenes scene pair with matching wheel-speed data.");
+    }
+
+    const fs::path wheel_speed_path =
+        scene_inputs.pose_path.parent_path() /
+        ("scene-" + *pose_scene_number + "_zoe_veh_info.json");
+    if (!fs::is_regular_file(wheel_speed_path)) {
+        throw std::runtime_error("Could not find wheel-speed file: " +
+                                 wheel_speed_path.string());
+    }
+
+    return wheel_speed_path;
+}
+
 void DropSingleTrailingPoseSample(std::vector<PoseSample>& pose_samples,
                                   const std::vector<ImuSample>& imu_samples) {
     if (pose_samples.empty() || imu_samples.empty()) {
@@ -223,6 +267,8 @@ LoadedScene LoadScene(const SceneInputs& scene_inputs) {
         LoadPoseSamples(LoadJsonFile(scene_inputs.pose_path));
     loaded_scene.imu_samples =
         LoadImuSamples(LoadJsonFile(scene_inputs.imu_path));
+    loaded_scene.wheel_speed_samples =
+        LoadWheelSpeedSamples(LoadJsonFile(MatchingWheelSpeedPath(scene_inputs)));
     DropSingleTrailingPoseSample(loaded_scene.pose_samples,
                                  loaded_scene.imu_samples);
     return loaded_scene;

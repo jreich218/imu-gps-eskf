@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -90,31 +91,67 @@ std::string ShellQuote(const fs::path& path) {
     return ShellQuote(path.string());
 }
 
-void CopyBundledSceneFiles(const fs::path& working_dir) {
-    const fs::path source_scenarios_dir =
-        fs::path(IMU_GPS_ESKF_SOURCE_DIR) / "scenarios";
-    const fs::path source_pose_path = source_scenarios_dir / "scene_pose.json";
-    const fs::path source_imu_path = source_scenarios_dir / "scene_ms_imu.json";
+constexpr double kPi = 3.14159265358979323846;
+constexpr double kWheelRadiusM = 0.305;
 
-    if (!fs::is_regular_file(source_pose_path)) {
-        throw std::runtime_error("Missing bundled pose file: " +
-                                 source_pose_path.string());
-    }
+double SpeedMpsToWheelRpm(double speed_mps) {
+    const double circumference_m = 2.0 * kPi * kWheelRadiusM;
+    return speed_mps * 60.0 / circumference_m;
+}
 
-    if (!fs::is_regular_file(source_imu_path)) {
-        throw std::runtime_error("Missing bundled IMU file: " +
-                                 source_imu_path.string());
-    }
-
+void WriteSimpleNuScenesSceneFiles(const fs::path& working_dir) {
     const fs::path scenarios_dir = working_dir / "scenarios";
     fs::create_directories(scenarios_dir);
 
-    fs::copy_file(source_pose_path,
-                  scenarios_dir / "scene_pose.json",
-                  fs::copy_options::overwrite_existing);
-    fs::copy_file(source_imu_path,
-                  scenarios_dir / "scene_ms_imu.json",
-                  fs::copy_options::overwrite_existing);
+    const double speed_mps = 25.0;
+    const double wheel_speed_rpm = SpeedMpsToWheelRpm(speed_mps);
+
+    Json pose_json = Json::array();
+    Json imu_json = Json::array();
+    Json wheel_speed_json = Json::array();
+
+    for (int index = 0; index < 10; ++index) {
+        const std::int64_t utime = 100000 + static_cast<std::int64_t>(index) * 100000;
+        const double x = static_cast<double>(index) * speed_mps * 0.1;
+
+        pose_json.push_back({
+            {"utime", utime},
+            {"pos", {x, 0.0, 0.0}},
+            {"orientation", {1.0, 0.0, 0.0, 0.0}},
+            {"vel", {speed_mps, 0.0, 0.0}},
+        });
+        imu_json.push_back({
+            {"utime", utime},
+            {"linear_accel", {0.0, 0.0, 9.8}},
+            {"rotation_rate", {0.0, 0.0, 0.0}},
+            {"q", {1.0, 0.0, 0.0, 0.0}},
+        });
+        wheel_speed_json.push_back({
+            {"utime", utime},
+            {"FL_wheel_speed", wheel_speed_rpm},
+            {"FR_wheel_speed", wheel_speed_rpm},
+            {"RL_wheel_speed", wheel_speed_rpm},
+            {"RR_wheel_speed", wheel_speed_rpm},
+        });
+    }
+
+    std::ofstream pose_out(scenarios_dir / "scene-0123_pose.json");
+    if (!pose_out) {
+        throw std::runtime_error("Could not create pose file.");
+    }
+    pose_out << pose_json.dump();
+
+    std::ofstream imu_out(scenarios_dir / "scene-0123_ms_imu.json");
+    if (!imu_out) {
+        throw std::runtime_error("Could not create IMU file.");
+    }
+    imu_out << imu_json.dump();
+
+    std::ofstream wheel_out(scenarios_dir / "scene-0123_zoe_veh_info.json");
+    if (!wheel_out) {
+        throw std::runtime_error("Could not create wheel-speed file.");
+    }
+    wheel_out << wheel_speed_json.dump();
 }
 
 int RunApp(const fs::path& working_dir,
@@ -216,9 +253,9 @@ RunSummary ParseRunSummary(const std::string& stdout_text) {
 
 }  // namespace
 
-TEST(AppIntegration, BundledRunWritesOutputsAndSummary) {
+TEST(AppIntegration, NuScenesRunWritesOutputsAndSummary) {
     TempDir temp_dir;
-    CopyBundledSceneFiles(temp_dir.path());
+    WriteSimpleNuScenesSceneFiles(temp_dir.path());
 
     const fs::path stdout_path = temp_dir.path() / "stdout.txt";
     const fs::path stderr_path = temp_dir.path() / "stderr.txt";
