@@ -38,7 +38,7 @@ For a supported nuScenes scene, the required files are `scene-XXXX_pose.json`, `
 
 The supported nuScenes operating set is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
 
-That manifest was produced from the current app behavior and the offline post-pruning procedure described on [Inputs](https://jasonmreich.com/eskf_docs/inputs/).
+That manifest is defined by the offline rule described on [Inputs](https://jasonmreich.com/eskf_docs/inputs/).
 
 If exactly one matching nuScenes input set is present under `scenarios/`, the app uses that scene's `scene-XXXX_pose.json`, `scene-XXXX_ms_imu.json`, and matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled set.
 
@@ -98,7 +98,6 @@ Visual Studio Code should open the terminal there automatically.
 
 ## Disclaimers
 
-- This project and its docs were written in collaboration with ChatGPT.
 - This repository is an educational demo only, it is not for safety-critical use.
 - This project is not affiliated with, endorsed by, or sponsored by nuScenes or Motional.
 - No nuScenes/Motional data or content is included or redistributed here.

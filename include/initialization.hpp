@@ -43,7 +43,7 @@ struct StartupTraceFrame {
     double pca_yaw_rad = 0.0;        ///< Principal-direction yaw.
     double projected_separation_m = 0.0;  ///< PCA projected start-to-end span.
     double required_projected_separation_m =
-        0.0;  ///< Historical projected-separation gate value.
+        0.0;  ///< Projected-separation threshold recorded in the trace.
     bool line_like = true;  ///< Whether the PCA cloud is line-like.
 
     double local_speed_mps = 0.0;     ///< Recent fitted-path local speed.
