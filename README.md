@@ -98,6 +98,7 @@ Visual Studio Code should open the terminal there automatically.
 
 ## Disclaimers
 
+- This project and its docs were written in collaboration with ChatGPT.
 - This repository is an educational demo only, it is not for safety-critical use.
 - This project is not affiliated with, endorsed by, or sponsored by nuScenes or Motional.
 - No nuScenes/Motional data or content is included or redistributed here.
