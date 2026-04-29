@@ -4,11 +4,7 @@
 
 This C++/Eigen IMU/GPS ESKF baseline for ego-state estimation can run on bundled simulated data in `scenarios` or on user-downloaded nuScenes CAN-bus data.
 
-Across all 979 nuScenes CAN-bus scenes, this baseline completed 973 scenes. For those 973 scenes, it reduced median horizontal RMSE from 2.98524 m for raw GPS to 0.974062 m for the ESKF, beating raw GPS in 972 of the 973 cases.
-
-The six non-completing scenes are expected
-
-IMU+GPS startup has a hard information limit: if the vehicle moves only a very small distance relative to GPS uncertainty, the data do not support a trustworthy heading and speed estimate. In that regime, rejecting initialization is the correct behavior, because there is no valid handoff to make without additional information.
+For nuScenes CAN-bus inputs, the documented operating set for this project is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
 
 The trajectory for the run on the bundled data is shown below.
 
@@ -19,7 +15,7 @@ The trajectory for the run on the bundled data is shown below.
 - A C++ ESKF over position, velocity, and attitude.
 - Synthetic 2D GPS generation from pose data.
 - Startup initialization from early IMU and synthetic GPS samples.
-- A bundled pose/IMU pair so the app runs out of the box, plus support for a single matching nuScenes scene pair.
+- A bundled pose/IMU pair so the app runs out of the box, plus support for a single matching nuScenes scene with pose, IMU, and wheel-speed inputs.
 - Unit tests and an end-to-end integration test.
 
 ## Project docs
@@ -36,9 +32,17 @@ The trajectory for the run on the bundled data is shown below.
 
 If you'd like to use the bundled simulated pair, the project can be built and run as is.
 
-This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and `scene-XXXX_pose.json` / `scene-XXXX_ms_imu.json` pairs from the nuScenes CAN bus data published in February 2020 by nuScenes. No nuScenes data is shipped here.
+This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and a documented subset of nuScenes CAN-bus scenes from the February 2020 release. No nuScenes data is shipped here.
 
-If exactly one matching nuScenes pair is present under `scenarios/`, the app uses that pair. Otherwise it uses the bundled pair.
+For a supported nuScenes scene, the required files are `scene-XXXX_pose.json`, `scene-XXXX_ms_imu.json`, and `scene-XXXX_zoe_veh_info.json`.
+
+The supported nuScenes operating set is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
+
+That manifest was produced from the current app behavior and the offline post-pruning procedure described on [Inputs](https://jasonmreich.com/eskf_docs/inputs/).
+
+If exactly one matching nuScenes pose/IMU pair is present under `scenarios/`, the app uses that scene and loads the matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled pair.
+
+The app does not check scene membership at runtime. You are expected to supply only scene IDs from the supported-scene manifest.
 
 See [Inputs](https://jasonmreich.com/eskf_docs/inputs/) for details on filenames, runtime selection, schemas, and time properties.
 

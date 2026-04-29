@@ -6,7 +6,7 @@ This page records how startup builds the handoff state for the live filter.
 
 ## Purpose
 
-Startup uses early IMU and synthetic GPS samples to produce one `StartupInitialization` object.
+Startup uses early IMU, synthetic GPS, and wheel-speed samples to produce one `StartupInitialization` object.
 
 That object contains:
 
@@ -38,7 +38,17 @@ That fit supplies:
 - the ready position at the window end
 - the local tangent velocity at the window end
 
-Windows are skipped when the endpoint speed is too small or when the projected start-to-end separation is still too small.
+Windows are skipped when the fitted endpoint speed is too small.
+
+## Readiness gate
+
+Startup does not end on GPS geometry alone.
+
+Instead, startup converts the four wheel speeds from `scene-XXXX_zoe_veh_info.json` into one robust speed magnitude, smooths that signal over a short trailing window, and integrates it from `startup_begin_utime`.
+
+Startup is allowed to finish only after this wheel-supported travel reaches `10 m`.
+
+The projected GPS span is still computed during startup, but it is no longer the thing that decides readiness.
 
 ## Heading
 
@@ -50,11 +60,11 @@ The startup yaw is a blend of those two headings.
 
 ## Speed
 
-Startup forms a recent local speed from the fitted path.
+The handed-off speed magnitude comes from the smoothed robust wheel-speed magnitude at the ready time.
 
-It also forms a global speed over the recent window.
+Startup then combines that magnitude with the chosen startup heading direction to form `v0_G`.
 
-The startup speed is a blend of those two speeds.
+On this pass, the heading construction is otherwise unchanged.
 
 ## IMU handoff
 
