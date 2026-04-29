@@ -62,6 +62,11 @@ SceneInputs BundledSceneInputs(const fs::path& scenarios_dir) {
     return scene_inputs;
 }
 
+bool IsBundledSceneInputs(const SceneInputs& scene_inputs) {
+    return scene_inputs.pose_path.filename() == "scene_pose.json" &&
+           scene_inputs.imu_path.filename() == "scene_ms_imu.json";
+}
+
 bool HasMatchingPair(const SceneInputs& scene_inputs) {
     return !scene_inputs.pose_path.empty() && !scene_inputs.imu_path.empty();
 }
@@ -163,6 +168,17 @@ std::vector<WheelSpeedSample> LoadWheelSpeedSamples(const Json& json) {
 }
 
 fs::path MatchingWheelSpeedPath(const SceneInputs& scene_inputs) {
+    if (IsBundledSceneInputs(scene_inputs)) {
+        const fs::path wheel_speed_path =
+            scene_inputs.pose_path.parent_path() / "scene_zoe_veh_info.json";
+        if (!fs::is_regular_file(wheel_speed_path)) {
+            throw std::runtime_error("Could not find wheel-speed file: " +
+                                     wheel_speed_path.string());
+        }
+
+        return wheel_speed_path;
+    }
+
     const std::string pose_name = scene_inputs.pose_path.filename().string();
     const std::string imu_name = scene_inputs.imu_path.filename().string();
 
@@ -171,7 +187,7 @@ fs::path MatchingWheelSpeedPath(const SceneInputs& scene_inputs) {
     if (!pose_scene_number.has_value() || !imu_scene_number.has_value() ||
         *pose_scene_number != *imu_scene_number) {
         throw std::runtime_error(
-            "LoadScene requires a nuScenes scene pair with matching wheel-speed data.");
+            "LoadScene requires either the bundled scene set or a nuScenes scene pair with matching wheel-speed data.");
     }
 
     const fs::path wheel_speed_path =
@@ -255,7 +271,7 @@ SceneInputs ChooseSceneInputs() {
     if (!fs::is_regular_file(scene_inputs.pose_path) ||
         !fs::is_regular_file(scene_inputs.imu_path)) {
         throw std::runtime_error(
-            "Could not find bundled input pair in scenarios.");
+            "Could not find bundled input set in scenarios.");
     }
 
     return scene_inputs;

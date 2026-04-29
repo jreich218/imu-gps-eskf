@@ -99,6 +99,24 @@ SceneInputs WriteNuScenesSceneFiles(const fs::path& root,
   return scene_inputs;
 }
 
+SceneInputs WriteBundledSceneFiles(const fs::path& root,
+                                   const Json& pose_json,
+                                   const Json& imu_json,
+                                   const Json& wheel_speed_json) {
+  const fs::path scenarios_dir = root / "scenarios";
+  fs::create_directories(scenarios_dir);
+
+  SceneInputs scene_inputs;
+  scene_inputs.pose_path = scenarios_dir / "scene_pose.json";
+  scene_inputs.imu_path = scenarios_dir / "scene_ms_imu.json";
+  const fs::path wheel_speed_path = scenarios_dir / "scene_zoe_veh_info.json";
+
+  WriteJsonFile(scene_inputs.pose_path, pose_json);
+  WriteJsonFile(scene_inputs.imu_path, imu_json);
+  WriteJsonFile(wheel_speed_path, wheel_speed_json);
+  return scene_inputs;
+}
+
 }  // namespace
 
 TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesPair) {
@@ -225,6 +243,44 @@ TEST(LoadScene, LoadsPoseAndImuSamples) {
   EXPECT_DOUBLE_EQ(loaded_scene.wheel_speed_samples[0].rr_wheel_speed_rpm, 13.0);
 }
 
+TEST(LoadScene, LoadsBundledWheelSpeedSamples) {
+  TempDir temp_dir;
+
+  const Json pose_json = Json::array(
+      {{{"utime", 1000},
+        {"pos", {1.0, 2.0, 0.0}},
+        {"orientation", {1.0, 0.0, 0.0, 0.0}},
+        {"vel", {3.0, 0.0, 0.0}}}});
+  const Json imu_json = Json::array(
+      {{{"utime", 1000},
+        {"linear_accel", {4.0, 5.0, 6.0}},
+        {"rotation_rate", {0.1, 0.2, 0.3}},
+        {"q", {1.0, 0.0, 0.0, 0.0}}}});
+  const Json wheel_speed_json = Json::array(
+      {{{"utime", 1000},
+        {"FL_wheel_speed", 10.0},
+        {"FR_wheel_speed", 11.0},
+        {"RL_wheel_speed", 12.0},
+        {"RR_wheel_speed", 13.0}}});
+
+  const SceneInputs scene_inputs =
+      WriteBundledSceneFiles(temp_dir.path(),
+                             pose_json,
+                             imu_json,
+                             wheel_speed_json);
+
+  const LoadedScene loaded_scene = LoadScene(scene_inputs);
+
+  ASSERT_EQ(loaded_scene.pose_samples.size(), 1U);
+  ASSERT_EQ(loaded_scene.imu_samples.size(), 1U);
+  ASSERT_EQ(loaded_scene.wheel_speed_samples.size(), 1U);
+  EXPECT_EQ(loaded_scene.wheel_speed_samples[0].utime, 1000);
+  EXPECT_DOUBLE_EQ(loaded_scene.wheel_speed_samples[0].fl_wheel_speed_rpm, 10.0);
+  EXPECT_DOUBLE_EQ(loaded_scene.wheel_speed_samples[0].fr_wheel_speed_rpm, 11.0);
+  EXPECT_DOUBLE_EQ(loaded_scene.wheel_speed_samples[0].rl_wheel_speed_rpm, 12.0);
+  EXPECT_DOUBLE_EQ(loaded_scene.wheel_speed_samples[0].rr_wheel_speed_rpm, 13.0);
+}
+
 TEST(LoadScene, DropsSingleTrailingPoseSampleAfterLastImu) {
   TempDir temp_dir;
 
@@ -294,6 +350,32 @@ TEST(LoadScene, ThrowsWhenMatchingWheelSpeedFileIsMissing) {
   SceneInputs scene_inputs;
   scene_inputs.pose_path = scenarios_dir / "scene-0123_pose.json";
   scene_inputs.imu_path = scenarios_dir / "scene-0123_ms_imu.json";
+  WriteJsonFile(scene_inputs.pose_path, pose_json);
+  WriteJsonFile(scene_inputs.imu_path, imu_json);
+
+  EXPECT_THROW(LoadScene(scene_inputs), std::runtime_error);
+}
+
+TEST(LoadScene, ThrowsWhenBundledWheelSpeedFileIsMissing) {
+  TempDir temp_dir;
+
+  const Json pose_json = Json::array(
+      {{{"utime", 1000},
+        {"pos", {0.0, 0.0, 0.0}},
+        {"orientation", {1.0, 0.0, 0.0, 0.0}},
+        {"vel", {0.0, 0.0, 0.0}}}});
+  const Json imu_json = Json::array(
+      {{{"utime", 1000},
+        {"linear_accel", {0.0, 0.0, 9.8}},
+        {"rotation_rate", {0.0, 0.0, 0.0}},
+        {"q", {1.0, 0.0, 0.0, 0.0}}}});
+
+  const fs::path scenarios_dir = temp_dir.path() / "scenarios";
+  fs::create_directories(scenarios_dir);
+
+  SceneInputs scene_inputs;
+  scene_inputs.pose_path = scenarios_dir / "scene_pose.json";
+  scene_inputs.imu_path = scenarios_dir / "scene_ms_imu.json";
   WriteJsonFile(scene_inputs.pose_path, pose_json);
   WriteJsonFile(scene_inputs.imu_path, imu_json);
 

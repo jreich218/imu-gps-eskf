@@ -154,6 +154,61 @@ void WriteSimpleNuScenesSceneFiles(const fs::path& working_dir) {
     wheel_out << wheel_speed_json.dump();
 }
 
+void WriteSimpleBundledSceneFiles(const fs::path& working_dir) {
+    const fs::path scenarios_dir = working_dir / "scenarios";
+    fs::create_directories(scenarios_dir);
+
+    const double speed_mps = 25.0;
+    const double wheel_speed_rpm = SpeedMpsToWheelRpm(speed_mps);
+
+    Json pose_json = Json::array();
+    Json imu_json = Json::array();
+    Json wheel_speed_json = Json::array();
+
+    for (int index = 0; index < 10; ++index) {
+        const std::int64_t utime = 100000 + static_cast<std::int64_t>(index) * 100000;
+        const double x = static_cast<double>(index) * speed_mps * 0.1;
+
+        pose_json.push_back({
+            {"utime", utime},
+            {"pos", {x, 0.0, 0.0}},
+            {"orientation", {1.0, 0.0, 0.0, 0.0}},
+            {"vel", {speed_mps, 0.0, 0.0}},
+        });
+        imu_json.push_back({
+            {"utime", utime},
+            {"linear_accel", {0.0, 0.0, 9.8}},
+            {"rotation_rate", {0.0, 0.0, 0.0}},
+            {"q", {1.0, 0.0, 0.0, 0.0}},
+        });
+        wheel_speed_json.push_back({
+            {"utime", utime},
+            {"FL_wheel_speed", wheel_speed_rpm},
+            {"FR_wheel_speed", wheel_speed_rpm},
+            {"RL_wheel_speed", wheel_speed_rpm},
+            {"RR_wheel_speed", wheel_speed_rpm},
+        });
+    }
+
+    std::ofstream pose_out(scenarios_dir / "scene_pose.json");
+    if (!pose_out) {
+        throw std::runtime_error("Could not create bundled pose file.");
+    }
+    pose_out << pose_json.dump();
+
+    std::ofstream imu_out(scenarios_dir / "scene_ms_imu.json");
+    if (!imu_out) {
+        throw std::runtime_error("Could not create bundled IMU file.");
+    }
+    imu_out << imu_json.dump();
+
+    std::ofstream wheel_out(scenarios_dir / "scene_zoe_veh_info.json");
+    if (!wheel_out) {
+        throw std::runtime_error("Could not create bundled wheel-speed file.");
+    }
+    wheel_out << wheel_speed_json.dump();
+}
+
 int RunApp(const fs::path& working_dir,
            const fs::path& stdout_path,
            const fs::path& stderr_path) {
@@ -256,6 +311,46 @@ RunSummary ParseRunSummary(const std::string& stdout_text) {
 TEST(AppIntegration, NuScenesRunWritesOutputsAndSummary) {
     TempDir temp_dir;
     WriteSimpleNuScenesSceneFiles(temp_dir.path());
+
+    const fs::path stdout_path = temp_dir.path() / "stdout.txt";
+    const fs::path stderr_path = temp_dir.path() / "stderr.txt";
+
+    const int exit_code = RunApp(temp_dir.path(), stdout_path, stderr_path);
+    ASSERT_EQ(exit_code, 0);
+
+    const std::string stdout_text = ReadFileToString(stdout_path);
+    const std::string stderr_text = ReadFileToString(stderr_path);
+
+    EXPECT_TRUE(stderr_text.empty());
+
+    const fs::path gps_json_path = temp_dir.path() / "output" / "gps.json";
+    const fs::path csv_path = temp_dir.path() / "output" / "eskf_sim_log.csv";
+
+    ASSERT_TRUE(fs::is_regular_file(gps_json_path));
+    ASSERT_TRUE(fs::is_regular_file(csv_path));
+    EXPECT_GT(fs::file_size(gps_json_path), 0U);
+    EXPECT_GT(fs::file_size(csv_path), 0U);
+
+    const Json gps_json = ReadJsonFile(gps_json_path);
+    ASSERT_TRUE(gps_json.is_array());
+    EXPECT_FALSE(gps_json.empty());
+
+    const RunSummary summary = ParseRunSummary(stdout_text);
+
+    EXPECT_GT(summary.gps_updates, 0U);
+    EXPECT_EQ(summary.log_path, "output/eskf_sim_log.csv");
+
+    const std::size_t csv_data_row_count = CountCsvDataRows(csv_path);
+    EXPECT_EQ(summary.gps_updates, csv_data_row_count);
+
+    EXPECT_GT(summary.raw_gps_rmse_xy, 0.0);
+    EXPECT_GT(summary.eskf_rmse_xy, 0.0);
+    EXPECT_LT(summary.eskf_rmse_xy, summary.raw_gps_rmse_xy);
+}
+
+TEST(AppIntegration, BundledRunWritesOutputsAndSummary) {
+    TempDir temp_dir;
+    WriteSimpleBundledSceneFiles(temp_dir.path());
 
     const fs::path stdout_path = temp_dir.path() / "stdout.txt";
     const fs::path stderr_path = temp_dir.path() / "stderr.txt";

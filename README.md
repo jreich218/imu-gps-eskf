@@ -15,7 +15,7 @@ The trajectory for the run on the bundled data is shown below.
 - A C++ ESKF over position, velocity, and attitude.
 - Synthetic 2D GPS generation from pose data.
 - Startup initialization from early IMU and synthetic GPS samples.
-- A bundled pose/IMU pair so the app runs out of the box, plus support for a single matching nuScenes scene with pose, IMU, and wheel-speed inputs.
+- A bundled pose, IMU, and wheel-speed set so the app runs out of the box, plus support for a single matching nuScenes scene with pose, IMU, and wheel-speed inputs.
 - Unit tests and an end-to-end integration test.
 
 ## Project docs
@@ -30,9 +30,9 @@ The trajectory for the run on the bundled data is shown below.
 
 ## Supported inputs
 
-If you'd like to use the bundled simulated pair, the project can be built and run as is.
+If you'd like to use the bundled simulated set, the project can be built and run as is.
 
-This repo supports the bundled `scene_pose.json` / `scene_ms_imu.json` pair and a documented subset of nuScenes CAN-bus scenes from the February 2020 release. No nuScenes data is shipped here.
+This repo supports the bundled `scene_pose.json`, `scene_ms_imu.json`, and `scene_zoe_veh_info.json` set and a documented subset of nuScenes CAN-bus scenes from the February 2020 release. No nuScenes data is shipped here.
 
 For a supported nuScenes scene, the required files are `scene-XXXX_pose.json`, `scene-XXXX_ms_imu.json`, and `scene-XXXX_zoe_veh_info.json`.
 
@@ -40,7 +40,7 @@ The supported nuScenes operating set is the `876` scene IDs listed in `metadata/
 
 That manifest was produced from the current app behavior and the offline post-pruning procedure described on [Inputs](https://jasonmreich.com/eskf_docs/inputs/).
 
-If exactly one matching nuScenes pose/IMU pair is present under `scenarios/`, the app uses that scene and loads the matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled pair.
+If exactly one matching nuScenes pose/IMU pair is present under `scenarios/`, the app uses that scene and loads the matching `scene-XXXX_zoe_veh_info.json`. Otherwise it uses the bundled set.
 
 The app does not check scene membership at runtime. You are expected to supply only scene IDs from the supported-scene manifest.
 
