@@ -33,7 +33,8 @@ SceneInputs ChooseSceneInputs();
  * @param scene_inputs Selected pose, IMU, and wheel-speed file paths.
  * @return Loaded pose, IMU, and wheel-speed samples.
  *
- * @throws std::runtime_error If a required selected file cannot be opened.
+ * @throws std::runtime_error If a required selected file cannot be opened, or
+ *     if parsing a selected file fails.
  */
 LoadedScene LoadScene(const SceneInputs& scene_inputs);
 

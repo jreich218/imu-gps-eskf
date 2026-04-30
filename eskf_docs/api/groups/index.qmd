@@ -100,7 +100,7 @@ dropped during load.
 
 #### Throws
 
-`std::runtime_error` If a required selected file cannot be opened.
+`std::runtime_error` If a required selected file cannot be opened, or if parsing a selected file fails.
 
 ## GPS Generation {#gps-generation}
 
