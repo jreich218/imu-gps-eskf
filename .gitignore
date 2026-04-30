@@ -69,6 +69,7 @@ cache/
 *.csv
 !schemas/*.ndjson
 !schemas/*.csv
+!analysis/**/*.csv
 
 .coverage
 htmlcov/
