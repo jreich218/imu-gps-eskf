@@ -4,9 +4,15 @@
 
 This C++/Eigen IMU/GPS ESKF baseline for ego-state estimation can run on bundled simulated data in `scenarios` or on user-downloaded nuScenes CAN-bus data.
 
-This project is meant to focus on the filter side rather than the initialization side of the problem. As such, only scenes where the vehicle achieves a distance of 10 m or more from its stating point are supported. Restricting support to these scenes allow initialization to rely on heading information from simple means of GPS clusters at the start and end of the pre-filter stage. The list of such scenes can be found in `metadata/supported_nuscenes_scenes.txt`. Future work would include either using more sophisticated initialization algorithms (e.g., a factor graph) to make heading observable for IMU/GPS only runs over ultra-short drives.
+This project is meant to focus on the filter side rather than the initialization side. As such, only scenes where the vehicle achieves a distance of at least 10m from the startup reference pose [early enough for the filter to still have samples to work with] are supported. The 10m applies both in maximum true radial distance traveled and distance from integrated robust wheel speed.
 
- nuScenes CAN-bus inputs, the documented operating set for this project is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
+Restricting support to these scenes allow initialization to rely on heading information from simple means of GPS clusters at the start and end of the pre-filter stage. Were the project to focus on initialization, a factor graph could be used to make heading observable for IMU/GPS only runs over ultra-short drives.
+
+There are `876` supported nuScenes scenes, they are listed in `metadata/supported_nuscenes_scenes.txt`.
+
+Across the `876` supported scenes run over `100` GPS-noise seeds, the app completed all `87,600` runs, beat raw GPS in `87,598` of them, and reduced per-seed median horizontal RMSE from `2.55858–3.09239 m` for raw GPS to `0.560191–1.10368 m` for the ESKF.
+
+As it happens the two cases that don't beat GPS are ones where the simple GPS cluster initialization does not produce good initial headings; so both would benefit from a factor graph being used for initialization.
 
 The trajectory for the run on the bundled data is shown below.
 

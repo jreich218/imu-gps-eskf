@@ -52,19 +52,24 @@ The projected GPS span is still computed during startup, but it is no longer the
 
 ## Heading
 
-Startup forms a local tangent heading from the fitted path.
+Startup forms one heading candidate from the GPS window itself.
+
+Let `N` be the number of GPS samples in the candidate window. Startup chooses `k = min(clamp(floor(N / 4), 2, 6), floor(N / 2))`, averages the first `k` GPS positions, averages the last `k` GPS positions, and takes the direction from the early mean to the late mean.
 
 It also forms a global heading from the GPS cloud principal direction, using IMU yaw change to make that heading curvature-aware when the GPS cloud is not line-like.
 
-The startup yaw is a blend of those two headings.
+The startup yaw is then the unit-circle blend of:
+
+- `75%` cluster-mean direction
+- `25%` global heading
+
+The quadratic fit no longer contributes a tangent heading to the final yaw choice.
 
 ## Speed
 
 The handed-off speed magnitude comes from the smoothed robust wheel-speed magnitude at the ready time.
 
 Startup then combines that magnitude with the chosen startup heading direction to form `v0_G`.
-
-The heading construction is otherwise unchanged.
 
 ## IMU handoff
 
