@@ -62,6 +62,8 @@ Within a scene, pose and IMU timestamps refer to the same time axis.
 
 `pose` is approximately `50 Hz` and `ms_imu` is approximately `100 Hz`, but neither stream lies on an exact `20000 us` or `10000 us` grid. Actual timestamps are irregular. Small jitter and occasional larger gaps are expected in real data. [@nuscenes-canbus-readme; @nuscenes-canbus-local-2026-03-26]
 
+On the supported inputs used by this app, contiguous IMU samples are always less than `100 ms` apart. Synthetic GPS keeps samples at least `100 ms` apart. As a result, at most one generated GPS sample can fall between contiguous IMU samples.
+
 ## Pose input (`*_pose.json`)
 
 ### Purpose in `IMU-GPS-ESKF`

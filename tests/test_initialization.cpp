@@ -77,6 +77,16 @@ Eigen::Vector2d CircleArcXy(double radius_m, double heading_rad) {
                            radius_m * (1.0 - std::cos(heading_rad)));
 }
 
+std::vector<std::int64_t> UniformUtimes(std::size_t sample_count) {
+    std::vector<std::int64_t> utimes;
+    utimes.reserve(sample_count);
+    for (std::size_t index = 0; index < sample_count; ++index) {
+        utimes.push_back(100000 + static_cast<std::int64_t>(index) * 100000);
+    }
+
+    return utimes;
+}
+
 }  // namespace
 
 TEST(ComputeStartupInitialization,
@@ -320,5 +330,92 @@ TEST(ComputeStartupInitialization, UsesHandoffImuOrientationToBuildQ0GI) {
 
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->first_unprocessed_imu_index, 5U);
+    EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI), 0.0, 1e-9);
+}
+
+TEST(ComputeStartupInitialization,
+     BlendsClusterHeadingTowardTheGlobalHeading) {
+    const std::vector<std::int64_t> utimes = UniformUtimes(14);
+    const std::vector<Eigen::Vector2d> xy_samples = {
+        Eigen::Vector2d(-1.0, -0.1),
+        Eigen::Vector2d(-1.0, 0.0),
+        Eigen::Vector2d(-1.0, 0.1),
+        Eigen::Vector2d(0.0, 3.0),
+        Eigen::Vector2d(0.0, 4.0),
+        Eigen::Vector2d(0.0, 5.0),
+        Eigen::Vector2d(0.0, 6.0),
+        Eigen::Vector2d(0.0, 7.0),
+        Eigen::Vector2d(0.0, 8.0),
+        Eigen::Vector2d(0.0, 5.0),
+        Eigen::Vector2d(1.0, 0.1),
+        Eigen::Vector2d(1.0, 0.0),
+        Eigen::Vector2d(1.0, -0.1),
+        Eigen::Vector2d(2.0, 0.0),
+    };
+
+    std::vector<ImuSample> imu_samples;
+    std::vector<GpsSample> gps_samples;
+    imu_samples.reserve(utimes.size());
+    gps_samples.reserve(utimes.size());
+    for (std::size_t index = 0; index < utimes.size(); ++index) {
+        imu_samples.push_back(MakeImuSample(utimes[index], 0.0));
+        gps_samples.push_back(
+            MakeGpsSample(utimes[index], xy_samples[index].x(), xy_samples[index].y()));
+    }
+
+    const std::vector<WheelSpeedSample> wheel_speed_samples =
+        MakeUniformWheelSpeedSamples(utimes, 8.4);
+
+    const std::optional<StartupInitialization> startup_initialization =
+        ComputeStartupInitialization(
+            imu_samples, gps_samples, wheel_speed_samples);
+
+    ASSERT_TRUE(startup_initialization.has_value());
+    ASSERT_EQ(startup_initialization->first_unprocessed_gps_index, 13U);
+    const double expected_yaw_rad = std::atan2(0.25, 0.75);
+    EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI),
+                expected_yaw_rad,
+                1e-9);
+}
+
+TEST(ComputeStartupInitialization,
+     FallsBackToTheGlobalHeadingWhenClusterMeansCoincide) {
+    const std::vector<std::int64_t> utimes = UniformUtimes(14);
+    const std::vector<Eigen::Vector2d> xy_samples = {
+        Eigen::Vector2d(-6.0, -1.0),
+        Eigen::Vector2d(-5.0, 0.0),
+        Eigen::Vector2d(-4.0, 1.0),
+        Eigen::Vector2d(-3.0, 0.0),
+        Eigen::Vector2d(-2.0, 0.0),
+        Eigen::Vector2d(-1.0, 0.0),
+        Eigen::Vector2d(0.0, 0.0),
+        Eigen::Vector2d(1.0, 0.0),
+        Eigen::Vector2d(2.0, 0.0),
+        Eigen::Vector2d(2.0, 0.0),
+        Eigen::Vector2d(-6.0, 1.0),
+        Eigen::Vector2d(-5.0, 0.0),
+        Eigen::Vector2d(-4.0, -1.0),
+        Eigen::Vector2d(-3.0, 0.0),
+    };
+
+    std::vector<ImuSample> imu_samples;
+    std::vector<GpsSample> gps_samples;
+    imu_samples.reserve(utimes.size());
+    gps_samples.reserve(utimes.size());
+    for (std::size_t index = 0; index < utimes.size(); ++index) {
+        imu_samples.push_back(MakeImuSample(utimes[index], 0.0));
+        gps_samples.push_back(
+            MakeGpsSample(utimes[index], xy_samples[index].x(), xy_samples[index].y()));
+    }
+
+    const std::vector<WheelSpeedSample> wheel_speed_samples =
+        MakeUniformWheelSpeedSamples(utimes, 8.4);
+
+    const std::optional<StartupInitialization> startup_initialization =
+        ComputeStartupInitialization(
+            imu_samples, gps_samples, wheel_speed_samples);
+
+    ASSERT_TRUE(startup_initialization.has_value());
+    ASSERT_EQ(startup_initialization->first_unprocessed_gps_index, 13U);
     EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI), 0.0, 1e-9);
 }
