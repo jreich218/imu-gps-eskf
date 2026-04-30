@@ -17,7 +17,8 @@
  */
 
 /**
- * @brief Compute the startup initialization from IMU and GPS samples.
+ * @brief Compute the startup initialization from IMU, GPS, and wheel-speed
+ *     samples.
  *
  * The returned object contains the initial state together with the first IMU
  * and GPS indices that still belong to the live post-startup run.
