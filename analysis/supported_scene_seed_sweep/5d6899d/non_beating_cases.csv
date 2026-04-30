@@ -1,0 +1,3 @@
+seed,scene_id,raw_gps_rmse_xy_m,eskf_rmse_xy_m,ratio
+9,scene-1076,2.66836,2.95545,1.1075904300769013
+75,scene-0778,2.66116,2.80887,1.0555058696207669
