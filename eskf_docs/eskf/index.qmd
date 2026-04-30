@@ -44,7 +44,7 @@ The update step:
 - applies the correction to position, velocity, and attitude
 - returns the innovation and NIS for logging
 
-The current horizontal GPS measurement noise is `2.0 m` standard deviation in both `x` and `y`.
+The horizontal GPS measurement noise is `2.0 m` standard deviation in both `x` and `y`.
 
 ## Live loop
 

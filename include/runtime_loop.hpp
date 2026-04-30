@@ -42,7 +42,7 @@ struct EskfRunResult {
  * @brief Run the post-startup ESKF loop and collect the data needed for
  * output writing.
  *
- * The returned rows match the eventual CSV content one row per GPS update.
+ * The returned rows match the CSV content, one row per GPS update.
  *
  * @param loaded_scene Loaded pose and IMU streams.
  * @param gps_samples Generated GPS samples.

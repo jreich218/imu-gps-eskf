@@ -15,7 +15,7 @@ The upstream nuScenes CAN-bus download stores the `scene-XXXX_pose.json`, `scene
 
 ### nuScenes scene inventory
 
-The nuScenes CAN-bus download provides `979` pose/IMU scene pairs, with matching `scene-XXXX_zoe_veh_info.json` files for the same scene IDs. `scene-0001_pose.json` and `scene-0001_ms_imu.json` are the pair for scene `0001`. Scene IDs are sparse and range from `scene-0001` through `scene-1110`. [@nuscenes-devkit-root-readme; @nuscenes-canbus-readme; @nuscenes-canbus-api; @nuscenes-canbus-local-2026-03-26]
+The nuScenes CAN-bus download provides `979` scene IDs with matching `scene-XXXX_pose.json`, `scene-XXXX_ms_imu.json`, and `scene-XXXX_zoe_veh_info.json` files. Scene IDs are sparse and range from `scene-0001` through `scene-1110`. [@nuscenes-devkit-root-readme; @nuscenes-canbus-readme; @nuscenes-canbus-api; @nuscenes-canbus-local-2026-03-26]
 
 ### nuScenes file-name variation
 
@@ -56,7 +56,7 @@ Within each file, records are in strictly increasing `utime` order. Across all `
 
 ### Shared time axis
 
-Within a scene pair, pose and IMU timestamps refer to the same time axis.
+Within a scene, pose and IMU timestamps refer to the same time axis.
 
 ### Sampling cadence
 
@@ -180,7 +180,7 @@ This file provides the wheel-speed stream used during startup.
 
 ### Required fields
 
-Startup currently uses these four fields from each record:
+Startup uses these four fields from each record:
 
 - `FL_wheel_speed`
 - `FR_wheel_speed`
@@ -209,22 +209,19 @@ This matters only during synthetic GPS generation. There are `110` scenes where 
 
 This section applies only to nuScenes CAN-bus inputs. The bundled simulated set remains supported independently of the nuScenes scene list on this page.
 
-For nuScenes CAN-bus inputs, `IMU-GPS-ESKF` is intended to be used only on the scene IDs listed in `metadata/supported_nuscenes_scenes.txt` in the app repo. The current manifest contains `876` supported nuScenes scenes.
+For nuScenes CAN-bus inputs, `IMU-GPS-ESKF` is intended to be used only on the scene IDs listed in `metadata/supported_nuscenes_scenes.txt` in the app repo. The manifest contains `876` supported nuScenes scenes.
 
 The app does not check scene membership at runtime. Users are expected to supply only scene IDs from the supported-scene manifest.
 
 ### Supported-scene manifest
 
-The supported-scene manifest is produced offline from the app's startup and runtime behavior.
+The supported-scene manifest is a fixed offline operating set for this project.
 
-First, run the current app across all `979` nuScenes CAN-bus scenes and keep only the scenes that complete startup and run successfully.
+This project is meant to focus on the filter side rather than the initialization side. For that reason, the supported nuScenes scene IDs are the ones that satisfy both of the following conditions:
 
-Then define `startup_begin_utime` on the loaded pose stream the app actually uses, after the single-trailing-pose drop described above when that case occurs. Let `startup_begin_utime` be the timestamp of the first synthetic GPS sample whose time is not earlier than the first IMU sample.
+- From the startup reference pose, the loaded pose stream reaches at least `10 m` of maximum true radial distance traveled.
+- The startup window reaches at least `10 m` of distance from integrated robust wheel speed early enough for startup to leave the live filter at least one GPS update to process.
 
-Take the loaded pose sample at `startup_begin_utime` as the reference pose. Then, over every later loaded pose sample with `utime >= startup_begin_utime`, compute horizontal distance from that reference using `pos[0]` and `pos[1]`. Let `max_distance` be the largest such distance.
+Here, `startup_begin_utime` is defined on the loaded pose stream the app actually uses, after the single-trailing-pose drop described above when that case occurs. It is the timestamp of the first synthetic GPS sample whose time is not earlier than the first IMU sample. The startup reference pose is the loaded pose sample at `startup_begin_utime`.
 
-A completed nuScenes scene is included in the supported-scene manifest if and only if `max_distance >= 10 m`.
-
-This is a true-excursion rule, not a total-travel rule. A scene can still be excluded after nontrivial motion if it never opens up `10 m` of horizontal separation from the startup reference pose.
-
-The pruning rule above is not part of runtime startup logic. It defines the supported nuScenes operating set.
+The pruning rule above is not part of runtime scene selection. It defines the supported nuScenes operating set listed in `metadata/supported_nuscenes_scenes.txt`.

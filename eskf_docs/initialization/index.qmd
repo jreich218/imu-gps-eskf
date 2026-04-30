@@ -48,7 +48,9 @@ Instead, startup converts the four wheel speeds from `scene-XXXX_zoe_veh_info.js
 
 Startup is allowed to finish only after this wheel-supported travel reaches `10 m`.
 
-The projected GPS span is still computed during startup, but it is no longer the thing that decides readiness.
+A candidate is rejected if reaching that point would leave no processable post-startup GPS update for the live filter.
+
+Projected GPS span is computed during startup, but readiness is decided by wheel-supported travel.
 
 ## Heading
 
@@ -63,7 +65,7 @@ The startup yaw is then the unit-circle blend of:
 - `75%` cluster-mean direction
 - `25%` global heading
 
-The quadratic fit no longer contributes a tangent heading to the final yaw choice.
+The final yaw comes from this blend.
 
 ## Speed
 
@@ -79,6 +81,6 @@ That handoff step:
 
 - carries position forward across the gap using the ready velocity
 - carries yaw forward across the gap using IMU yaw change
-- builds `q0_GI` from the carried global yaw and the handoff IMU sample's `q_AI`
+- builds `q0_GI` from the carried startup yaw and the handoff IMU sample's `q_AI`
 
 The returned `StartupInitialization` is the exact handoff used by the live loop.

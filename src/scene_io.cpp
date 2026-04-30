@@ -55,20 +55,21 @@ std::optional<std::string> ImuSceneNumber(const std::string& name) {
     return SceneNumberIfFilenameMatches(name, "_ms_imu.json");
 }
 
+std::optional<std::string> WheelSpeedSceneNumber(const std::string& name) {
+    return SceneNumberIfFilenameMatches(name, "_zoe_veh_info.json");
+}
+
 SceneInputs BundledSceneInputs(const fs::path& scenarios_dir) {
     SceneInputs scene_inputs;
     scene_inputs.pose_path = scenarios_dir / "scene_pose.json";
     scene_inputs.imu_path = scenarios_dir / "scene_ms_imu.json";
+    scene_inputs.wheel_speed_path = scenarios_dir / "scene_zoe_veh_info.json";
     return scene_inputs;
 }
 
-bool IsBundledSceneInputs(const SceneInputs& scene_inputs) {
-    return scene_inputs.pose_path.filename() == "scene_pose.json" &&
-           scene_inputs.imu_path.filename() == "scene_ms_imu.json";
-}
-
-bool HasMatchingPair(const SceneInputs& scene_inputs) {
-    return !scene_inputs.pose_path.empty() && !scene_inputs.imu_path.empty();
+bool HasCompleteSceneInputs(const SceneInputs& scene_inputs) {
+    return !scene_inputs.pose_path.empty() && !scene_inputs.imu_path.empty() &&
+           !scene_inputs.wheel_speed_path.empty();
 }
 
 Json LoadJsonFile(const fs::path& path) {
@@ -167,40 +168,6 @@ std::vector<WheelSpeedSample> LoadWheelSpeedSamples(const Json& json) {
     return wheel_speed_samples;
 }
 
-fs::path MatchingWheelSpeedPath(const SceneInputs& scene_inputs) {
-    if (IsBundledSceneInputs(scene_inputs)) {
-        const fs::path wheel_speed_path =
-            scene_inputs.pose_path.parent_path() / "scene_zoe_veh_info.json";
-        if (!fs::is_regular_file(wheel_speed_path)) {
-            throw std::runtime_error("Could not find wheel-speed file: " +
-                                     wheel_speed_path.string());
-        }
-
-        return wheel_speed_path;
-    }
-
-    const std::string pose_name = scene_inputs.pose_path.filename().string();
-    const std::string imu_name = scene_inputs.imu_path.filename().string();
-
-    const auto pose_scene_number = PoseSceneNumber(pose_name);
-    const auto imu_scene_number = ImuSceneNumber(imu_name);
-    if (!pose_scene_number.has_value() || !imu_scene_number.has_value() ||
-        *pose_scene_number != *imu_scene_number) {
-        throw std::runtime_error(
-            "LoadScene requires either the bundled scene set or a nuScenes scene pair with matching wheel-speed data.");
-    }
-
-    const fs::path wheel_speed_path =
-        scene_inputs.pose_path.parent_path() /
-        ("scene-" + *pose_scene_number + "_zoe_veh_info.json");
-    if (!fs::is_regular_file(wheel_speed_path)) {
-        throw std::runtime_error("Could not find wheel-speed file: " +
-                                 wheel_speed_path.string());
-    }
-
-    return wheel_speed_path;
-}
-
 void DropSingleTrailingPoseSample(std::vector<PoseSample>& pose_samples,
                                   const std::vector<ImuSample>& imu_samples) {
     if (pose_samples.empty() || imu_samples.empty()) {
@@ -227,8 +194,8 @@ void DropSingleTrailingPoseSample(std::vector<PoseSample>& pose_samples,
 SceneInputs ChooseSceneInputs() {
     const fs::path scenarios_dir = "scenarios";
     std::unordered_map<std::string, SceneInputs> scene_inputs_by_scene_number;
-    std::size_t num_matching_pairs = 0;
-    SceneInputs matching_pair;
+    std::size_t num_complete_scenes = 0;
+    SceneInputs matching_scene_inputs;
 
     for (const auto& entry : fs::directory_iterator(scenarios_dir)) {
         if (!entry.is_regular_file()) {
@@ -238,38 +205,49 @@ SceneInputs ChooseSceneInputs() {
         const fs::path path = entry.path();
         const std::string name = path.filename().string();
         if (const auto scene_number = PoseSceneNumber(name)) {
-            SceneInputs& scene_inputs =
-                scene_inputs_by_scene_number[*scene_number];
-            const bool had_matching_pair = HasMatchingPair(scene_inputs);
+            SceneInputs& scene_inputs = scene_inputs_by_scene_number[*scene_number];
+            const bool had_complete_scene = HasCompleteSceneInputs(scene_inputs);
             scene_inputs.pose_path = path;
 
-            if (!had_matching_pair && HasMatchingPair(scene_inputs)) {
-                ++num_matching_pairs;
-                matching_pair = scene_inputs;
+            if (!had_complete_scene && HasCompleteSceneInputs(scene_inputs)) {
+                ++num_complete_scenes;
+                matching_scene_inputs = scene_inputs;
             }
             continue;
         }
 
         if (const auto scene_number = ImuSceneNumber(name)) {
-            SceneInputs& scene_inputs =
-                scene_inputs_by_scene_number[*scene_number];
-            const bool had_matching_pair = HasMatchingPair(scene_inputs);
+            SceneInputs& scene_inputs = scene_inputs_by_scene_number[*scene_number];
+            const bool had_complete_scene = HasCompleteSceneInputs(scene_inputs);
             scene_inputs.imu_path = path;
 
-            if (!had_matching_pair && HasMatchingPair(scene_inputs)) {
-                ++num_matching_pairs;
-                matching_pair = scene_inputs;
+            if (!had_complete_scene && HasCompleteSceneInputs(scene_inputs)) {
+                ++num_complete_scenes;
+                matching_scene_inputs = scene_inputs;
+            }
+            continue;
+        }
+
+        if (const auto scene_number = WheelSpeedSceneNumber(name)) {
+            SceneInputs& scene_inputs = scene_inputs_by_scene_number[*scene_number];
+            const bool had_complete_scene = HasCompleteSceneInputs(scene_inputs);
+            scene_inputs.wheel_speed_path = path;
+
+            if (!had_complete_scene && HasCompleteSceneInputs(scene_inputs)) {
+                ++num_complete_scenes;
+                matching_scene_inputs = scene_inputs;
             }
         }
     }
 
-    if (num_matching_pairs == 1) {
-        return matching_pair;
+    if (num_complete_scenes == 1) {
+        return matching_scene_inputs;
     }
 
     const SceneInputs scene_inputs = BundledSceneInputs(scenarios_dir);
     if (!fs::is_regular_file(scene_inputs.pose_path) ||
-        !fs::is_regular_file(scene_inputs.imu_path)) {
+        !fs::is_regular_file(scene_inputs.imu_path) ||
+        !fs::is_regular_file(scene_inputs.wheel_speed_path)) {
         throw std::runtime_error(
             "Could not find bundled input set in scenarios.");
     }
@@ -284,7 +262,7 @@ LoadedScene LoadScene(const SceneInputs& scene_inputs) {
     loaded_scene.imu_samples =
         LoadImuSamples(LoadJsonFile(scene_inputs.imu_path));
     loaded_scene.wheel_speed_samples =
-        LoadWheelSpeedSamples(LoadJsonFile(MatchingWheelSpeedPath(scene_inputs)));
+        LoadWheelSpeedSamples(LoadJsonFile(scene_inputs.wheel_speed_path));
     DropSingleTrailingPoseSample(loaded_scene.pose_samples,
                                  loaded_scene.imu_samples);
     return loaded_scene;

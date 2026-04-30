@@ -8,10 +8,11 @@
 #include <filesystem>
 #include <vector>
 
-/// Selected pose and IMU input file paths.
+/// Selected input file paths.
 struct SceneInputs {
     std::filesystem::path pose_path;  ///< Pose file path.
     std::filesystem::path imu_path;   ///< IMU file path.
+    std::filesystem::path wheel_speed_path;  ///< Wheel-speed file path.
 };
 
 /// One sample from the reference pose stream.

@@ -10,14 +10,13 @@
  */
 
 /**
- * @brief Select the pose and IMU files for the run.
+ * @brief Select the input set for the run.
  *
- * If exactly one matching `scene-XXXX_pose.json` /
- * `scene-XXXX_ms_imu.json` pair is present under `scenarios`, that pair is
- * used. Otherwise the bundled `scene_pose.json`, `scene_ms_imu.json`, and
- * `scene_zoe_veh_info.json` set is used.
+ * If exactly one matching nuScenes input set is present under `scenarios`,
+ * that scene is used. Otherwise the bundled `scene_pose.json`,
+ * `scene_ms_imu.json`, and `scene_zoe_veh_info.json` set is used.
  *
- * @return The chosen input file pair.
+ * @return Selected pose, IMU, and wheel-speed file paths.
  *
  * @throws std::runtime_error If the bundled set is needed but missing.
  */
@@ -27,12 +26,9 @@ SceneInputs ChooseSceneInputs();
  * @brief Load the selected pose, IMU, and wheel-speed streams.
  *
  * If exactly one final pose sample occurs after the last IMU sample, it is
- * dropped during load. For a nuScenes scene pair, the sibling
- * `scene-XXXX_zoe_veh_info.json` file is loaded from the same directory. For
- * the bundled set, `scene_zoe_veh_info.json` is loaded from the same
- * directory as `scene_pose.json`.
+ * dropped during load.
  *
- * @param scene_inputs Selected pose and IMU file paths.
+ * @param scene_inputs Selected pose, IMU, and wheel-speed file paths.
  * @return Loaded pose, IMU, and wheel-speed samples.
  *
  * @throws std::runtime_error If a required selected file cannot be opened.

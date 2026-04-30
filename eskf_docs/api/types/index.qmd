@@ -6,10 +6,11 @@ body-classes: "cpp-api-page cpp-api-types-page"
 
 | Kind | Name | Description |
 | --- | --- | --- |
-| struct | [`SceneInputs`](#scene-inputs) | Selected pose and IMU input file paths. |
+| struct | [`SceneInputs`](#scene-inputs) | Selected input file paths. |
 | struct | [`PoseSample`](#pose-sample) | One sample from the reference pose stream. |
 | struct | [`ImuSample`](#imu-sample) | One sample from the input IMU stream. |
-| struct | [`LoadedScene`](#loaded-scene) | Loaded reference-pose and IMU streams. |
+| struct | [`WheelSpeedSample`](#wheel-speed-sample) | One wheel-speed CAN sample from `zoe_veh_info`. |
+| struct | [`LoadedScene`](#loaded-scene) | Loaded reference-pose, IMU, and wheel-speed streams. |
 | struct | [`GpsSample`](#gps-sample) | One synthetic 2D GPS sample. |
 | struct | [`StartupInitialization`](#startup-initialization) | Initialization data required to start the filter. |
 | struct | [`GpsUpdateResult`](#gps-update-result) | Diagnostics from one 2D GPS update. |
@@ -19,7 +20,7 @@ body-classes: "cpp-api-page cpp-api-types-page"
 
 ## `SceneInputs` {#scene-inputs}
 
-Selected pose and IMU input file paths.
+Selected input file paths.
 
 **Signature**
 
@@ -35,6 +36,7 @@ struct SceneInputs
 
 - `pose_path`: Pose file path.
 - `imu_path`: IMU file path.
+- `wheel_speed_path`: Wheel-speed file path.
 
 ## `PoseSample` {#pose-sample}
 
@@ -43,7 +45,7 @@ One sample from the reference pose stream.
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L18">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L19">source</a></div>
 
 ```cpp
 struct PoseSample
@@ -64,7 +66,7 @@ One sample from the input IMU stream.
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L28">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L29">source</a></div>
 
 ```cpp
 struct ImuSample
@@ -78,14 +80,36 @@ struct ImuSample
 - `rotation_rate`: Measured angular velocity in frame I.
 - `q_AI`: Quaternion from frame I to gravity-aligned frame A.
 
-## `LoadedScene` {#loaded-scene}
+## `WheelSpeedSample` {#wheel-speed-sample}
 
-Loaded reference-pose and IMU streams.
+One wheel-speed CAN sample from `zoe_veh_info`.
 
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L42">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L43">source</a></div>
+
+```cpp
+struct WheelSpeedSample
+```
+:::
+
+**Fields**
+
+- `utime`: Timestamp in microseconds.
+- `fl_wheel_speed_rpm`: Front-left wheel speed in rpm.
+- `fr_wheel_speed_rpm`: Front-right wheel speed in rpm.
+- `rl_wheel_speed_rpm`: Rear-left wheel speed in rpm.
+- `rr_wheel_speed_rpm`: Rear-right wheel speed in rpm.
+
+## `LoadedScene` {#loaded-scene}
+
+Loaded reference-pose, IMU, and wheel-speed streams.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L52">source</a></div>
 
 ```cpp
 struct LoadedScene
@@ -96,6 +120,7 @@ struct LoadedScene
 
 - `pose_samples`: Loaded pose samples.
 - `imu_samples`: Loaded IMU samples.
+- `wheel_speed_samples`: Loaded wheel-speed samples.
 
 ## `GpsSample` {#gps-sample}
 
@@ -104,7 +129,7 @@ One synthetic 2D GPS sample.
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L48">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L60">source</a></div>
 
 ```cpp
 struct GpsSample
@@ -123,7 +148,7 @@ Initialization data required to start the filter.
 **Signature**
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L54">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L66">source</a></div>
 
 ```cpp
 struct StartupInitialization

@@ -91,11 +91,11 @@ SceneInputs WriteNuScenesSceneFiles(const fs::path& root,
   SceneInputs scene_inputs;
   scene_inputs.pose_path = scenarios_dir / "scene-0123_pose.json";
   scene_inputs.imu_path = scenarios_dir / "scene-0123_ms_imu.json";
-  const fs::path wheel_speed_path = scenarios_dir / "scene-0123_zoe_veh_info.json";
+  scene_inputs.wheel_speed_path = scenarios_dir / "scene-0123_zoe_veh_info.json";
 
   WriteJsonFile(scene_inputs.pose_path, pose_json);
   WriteJsonFile(scene_inputs.imu_path, imu_json);
-  WriteJsonFile(wheel_speed_path, wheel_speed_json);
+  WriteJsonFile(scene_inputs.wheel_speed_path, wheel_speed_json);
   return scene_inputs;
 }
 
@@ -109,17 +109,17 @@ SceneInputs WriteBundledSceneFiles(const fs::path& root,
   SceneInputs scene_inputs;
   scene_inputs.pose_path = scenarios_dir / "scene_pose.json";
   scene_inputs.imu_path = scenarios_dir / "scene_ms_imu.json";
-  const fs::path wheel_speed_path = scenarios_dir / "scene_zoe_veh_info.json";
+  scene_inputs.wheel_speed_path = scenarios_dir / "scene_zoe_veh_info.json";
 
   WriteJsonFile(scene_inputs.pose_path, pose_json);
   WriteJsonFile(scene_inputs.imu_path, imu_json);
-  WriteJsonFile(wheel_speed_path, wheel_speed_json);
+  WriteJsonFile(scene_inputs.wheel_speed_path, wheel_speed_json);
   return scene_inputs;
 }
 
 }  // namespace
 
-TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesPair) {
+TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesScene) {
   TempDir temp_dir;
   ScopedCurrentPath scoped_current_path(temp_dir.path());
 
@@ -127,23 +127,31 @@ TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesPair) {
       AddScenarioFile(temp_dir.path(), "scene-0364_pose.json");
   const fs::path imu_path =
       AddScenarioFile(temp_dir.path(), "scene-0364_ms_imu.json");
+  const fs::path wheel_speed_path =
+      AddScenarioFile(temp_dir.path(), "scene-0364_zoe_veh_info.json");
 
   const SceneInputs scene_inputs = ChooseSceneInputs();
 
   EXPECT_EQ(scene_inputs.pose_path, pose_path.lexically_relative(temp_dir.path()));
   EXPECT_EQ(scene_inputs.imu_path, imu_path.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.wheel_speed_path,
+            wheel_speed_path.lexically_relative(temp_dir.path()));
 }
 
-TEST(ChooseSceneInputs, ReturnsBundledPairWhenTwoMatchingNuScenesPairsExist) {
+TEST(ChooseSceneInputs, ReturnsBundledSetWhenTwoMatchingNuScenesScenesExist) {
   TempDir temp_dir;
   ScopedCurrentPath scoped_current_path(temp_dir.path());
 
   AddScenarioFile(temp_dir.path(), "scene-0364_pose.json");
   AddScenarioFile(temp_dir.path(), "scene-0364_ms_imu.json");
+  AddScenarioFile(temp_dir.path(), "scene-0364_zoe_veh_info.json");
   AddScenarioFile(temp_dir.path(), "scene-0421_pose.json");
   AddScenarioFile(temp_dir.path(), "scene-0421_ms_imu.json");
+  AddScenarioFile(temp_dir.path(), "scene-0421_zoe_veh_info.json");
   const fs::path bundled_pose = AddScenarioFile(temp_dir.path(), "scene_pose.json");
   const fs::path bundled_imu = AddScenarioFile(temp_dir.path(), "scene_ms_imu.json");
+  const fs::path bundled_wheel_speed =
+      AddScenarioFile(temp_dir.path(), "scene_zoe_veh_info.json");
 
   const SceneInputs scene_inputs = ChooseSceneInputs();
 
@@ -151,14 +159,18 @@ TEST(ChooseSceneInputs, ReturnsBundledPairWhenTwoMatchingNuScenesPairsExist) {
             bundled_pose.lexically_relative(temp_dir.path()));
   EXPECT_EQ(scene_inputs.imu_path,
             bundled_imu.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.wheel_speed_path,
+            bundled_wheel_speed.lexically_relative(temp_dir.path()));
 }
 
-TEST(ChooseSceneInputs, ReturnsBundledPairWhenNoMatchingNuScenesPairExists) {
+TEST(ChooseSceneInputs, ReturnsBundledSetWhenNoMatchingNuScenesSceneExists) {
   TempDir temp_dir;
   ScopedCurrentPath scoped_current_path(temp_dir.path());
 
   const fs::path bundled_pose = AddScenarioFile(temp_dir.path(), "scene_pose.json");
   const fs::path bundled_imu = AddScenarioFile(temp_dir.path(), "scene_ms_imu.json");
+  const fs::path bundled_wheel_speed =
+      AddScenarioFile(temp_dir.path(), "scene_zoe_veh_info.json");
 
   const SceneInputs scene_inputs = ChooseSceneInputs();
 
@@ -166,21 +178,25 @@ TEST(ChooseSceneInputs, ReturnsBundledPairWhenNoMatchingNuScenesPairExists) {
             bundled_pose.lexically_relative(temp_dir.path()));
   EXPECT_EQ(scene_inputs.imu_path,
             bundled_imu.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.wheel_speed_path,
+            bundled_wheel_speed.lexically_relative(temp_dir.path()));
 }
 
-TEST(ChooseSceneInputs, ThrowsWhenBundledPairIsMissingAndNuScenesPairCountIsNotOne) {
+TEST(ChooseSceneInputs, ThrowsWhenBundledSetIsMissingAndNuScenesSceneCountIsNotOne) {
   TempDir temp_dir;
   ScopedCurrentPath scoped_current_path(temp_dir.path());
 
   AddScenarioFile(temp_dir.path(), "scene-0364_pose.json");
   AddScenarioFile(temp_dir.path(), "scene-0364_ms_imu.json");
+  AddScenarioFile(temp_dir.path(), "scene-0364_zoe_veh_info.json");
   AddScenarioFile(temp_dir.path(), "scene-0421_pose.json");
   AddScenarioFile(temp_dir.path(), "scene-0421_ms_imu.json");
+  AddScenarioFile(temp_dir.path(), "scene-0421_zoe_veh_info.json");
 
   EXPECT_THROW(ChooseSceneInputs(), std::runtime_error);
 }
 
-TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesPairWithUnmatchedStrayFilePresent) {
+TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesSceneWithUnmatchedStrayFilePresent) {
   TempDir temp_dir;
   ScopedCurrentPath scoped_current_path(temp_dir.path());
 
@@ -188,12 +204,47 @@ TEST(ChooseSceneInputs, ReturnsSingleMatchingNuScenesPairWithUnmatchedStrayFileP
       AddScenarioFile(temp_dir.path(), "scene-0364_pose.json");
   const fs::path imu_path =
       AddScenarioFile(temp_dir.path(), "scene-0364_ms_imu.json");
+  const fs::path wheel_speed_path =
+      AddScenarioFile(temp_dir.path(), "scene-0364_zoe_veh_info.json");
   AddScenarioFile(temp_dir.path(), "scene-0421_pose.json");
 
   const SceneInputs scene_inputs = ChooseSceneInputs();
 
   EXPECT_EQ(scene_inputs.pose_path, pose_path.lexically_relative(temp_dir.path()));
   EXPECT_EQ(scene_inputs.imu_path, imu_path.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.wheel_speed_path,
+            wheel_speed_path.lexically_relative(temp_dir.path()));
+}
+
+TEST(ChooseSceneInputs, ReturnsBundledSetWhenSingleNuScenesSceneLacksWheelSpeedFile) {
+  TempDir temp_dir;
+  ScopedCurrentPath scoped_current_path(temp_dir.path());
+
+  AddScenarioFile(temp_dir.path(), "scene-0364_pose.json");
+  AddScenarioFile(temp_dir.path(), "scene-0364_ms_imu.json");
+  const fs::path bundled_pose = AddScenarioFile(temp_dir.path(), "scene_pose.json");
+  const fs::path bundled_imu = AddScenarioFile(temp_dir.path(), "scene_ms_imu.json");
+  const fs::path bundled_wheel_speed =
+      AddScenarioFile(temp_dir.path(), "scene_zoe_veh_info.json");
+
+  const SceneInputs scene_inputs = ChooseSceneInputs();
+
+  EXPECT_EQ(scene_inputs.pose_path,
+            bundled_pose.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.imu_path,
+            bundled_imu.lexically_relative(temp_dir.path()));
+  EXPECT_EQ(scene_inputs.wheel_speed_path,
+            bundled_wheel_speed.lexically_relative(temp_dir.path()));
+}
+
+TEST(ChooseSceneInputs, ThrowsWhenBundledWheelSpeedFileIsMissing) {
+  TempDir temp_dir;
+  ScopedCurrentPath scoped_current_path(temp_dir.path());
+
+  AddScenarioFile(temp_dir.path(), "scene_pose.json");
+  AddScenarioFile(temp_dir.path(), "scene_ms_imu.json");
+
+  EXPECT_THROW(ChooseSceneInputs(), std::runtime_error);
 }
 
 TEST(LoadScene, LoadsPoseAndImuSamples) {
@@ -350,6 +401,7 @@ TEST(LoadScene, ThrowsWhenMatchingWheelSpeedFileIsMissing) {
   SceneInputs scene_inputs;
   scene_inputs.pose_path = scenarios_dir / "scene-0123_pose.json";
   scene_inputs.imu_path = scenarios_dir / "scene-0123_ms_imu.json";
+  scene_inputs.wheel_speed_path = scenarios_dir / "scene-0123_zoe_veh_info.json";
   WriteJsonFile(scene_inputs.pose_path, pose_json);
   WriteJsonFile(scene_inputs.imu_path, imu_json);
 
@@ -376,6 +428,7 @@ TEST(LoadScene, ThrowsWhenBundledWheelSpeedFileIsMissing) {
   SceneInputs scene_inputs;
   scene_inputs.pose_path = scenarios_dir / "scene_pose.json";
   scene_inputs.imu_path = scenarios_dir / "scene_ms_imu.json";
+  scene_inputs.wheel_speed_path = scenarios_dir / "scene_zoe_veh_info.json";
   WriteJsonFile(scene_inputs.pose_path, pose_json);
   WriteJsonFile(scene_inputs.imu_path, imu_json);
 

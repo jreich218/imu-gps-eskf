@@ -19,7 +19,7 @@ aliases:
 
 ## Initialization
 
-[Initialization](initialization/index.qmd) discusses how the app turns early IMU and synthetic GPS samples into the startup handoff state for the live filter.
+[Initialization](initialization/index.qmd) discusses how the app turns early IMU, synthetic GPS, and wheel-speed samples into the startup handoff state for the live filter.
 
 ## ESKF
 

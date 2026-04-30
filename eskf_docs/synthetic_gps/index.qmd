@@ -26,14 +26,16 @@ The output timestamp is copied from the kept pose sample.
 
 Each kept pose sample becomes one noisy horizontal position measurement.
 
-The current implementation adds independent zero-mean Gaussian noise to `x` and `y`.
+The generator adds independent zero-mean Gaussian noise to `x` and `y`.
 
-The current constants are:
+It uses:
 
 - `sigma = 2.0 m`
-- fixed seed `1234`
+- default seed `1234`
+- environment variable override `IMU_GPS_ESKF_GPS_SEED`
 
-So for a fixed pose stream, the generated GPS stream is deterministic across runs.
+So for a fixed pose stream, the generated GPS stream is deterministic across
+runs for a fixed seed.
 
 ## Role in the app
 
