@@ -36,7 +36,8 @@ class Eskf {
      *
      * @pre Initialize() has been called.
      *
-     * @throws std::runtime_error If the filter is not initialized.
+     * @throws std::runtime_error If the filter is not initialized, or if the
+     *     state covariance becomes numerically invalid during propagation.
      */
     void Predict(const ImuSample& current_imu_sample);
 

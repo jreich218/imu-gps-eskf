@@ -269,7 +269,7 @@ IMU/GPS updates after startup.
 #### `Predict()`
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L41">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L42">source</a></div>
 
 ```cpp
 void Predict(const ImuSample& current_imu_sample);
@@ -288,12 +288,12 @@ Propagate the filter from the previous IMU sample to the current one.
 
 ##### Throws
 
-`std::runtime_error` If the filter is not initialized.
+`std::runtime_error` If the filter is not initialized, or if the state covariance becomes numerically invalid during propagation.
 
 #### `UpdateGps()`
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L55">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L56">source</a></div>
 
 ```cpp
 GpsUpdateResult UpdateGps(const GpsSample& gps_sample);
@@ -322,4 +322,4 @@ Innovation and NIS from this GPS update.
 
 | Signature | Description | Output | Preconditions | Throws |
 | --- | --- | --- | --- | --- |
-| [`const Eigen::Vector3d& PositionG() const`](https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L66) | Get the current nominal position in frame G. | Current nominal position in frame G. | `Initialize()` has been called. | `std::runtime_error` If the filter is not initialized. |
+| [`const Eigen::Vector3d& PositionG() const`](https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L67) | Get the current nominal position in frame G. | Current nominal position in frame G. | `Initialize()` has been called. | `std::runtime_error` If the filter is not initialized. |
