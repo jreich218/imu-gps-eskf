@@ -4,7 +4,9 @@
 
 This C++/Eigen IMU/GPS ESKF baseline for ego-state estimation can run on bundled simulated data in `scenarios` or on user-downloaded nuScenes CAN-bus data.
 
-For nuScenes CAN-bus inputs, the documented operating set for this project is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
+This project is meant to focus on the filter side rather than the initialization side of the problem. As such, only scenes where the vehicle achieves a distance of 10 m or more from its stating point are supported. Restricting support to these scenes allow initialization to rely on heading information from simple means of GPS clusters at the start and end of the pre-filter stage. The list of such scenes can be found in `metadata/supported_nuscenes_scenes.txt`. Future work would include either using more sophisticated initialization algorithms (e.g., a factor graph) to make heading observable for IMU/GPS only runs over ultra-short drives.
+
+ nuScenes CAN-bus inputs, the documented operating set for this project is the `876` scene IDs listed in `metadata/supported_nuscenes_scenes.txt`.
 
 The trajectory for the run on the bundled data is shown below.
 

@@ -228,6 +228,35 @@ TEST(ComputeStartupInitialization,
                      .has_value());
 }
 
+TEST(ComputeStartupInitialization,
+     ReturnsNulloptWhenReadinessConsumesTheLastGpsSample) {
+    const std::vector<ImuSample> imu_samples = {
+        MakeImuSample(100000, 0.0),
+        MakeImuSample(200000, 0.0),
+        MakeImuSample(300000, 0.0),
+        MakeImuSample(400000, 0.0),
+        MakeImuSample(500000, 0.0),
+        MakeImuSample(600000, 0.0),
+    };
+
+    const std::vector<GpsSample> gps_samples = {
+        MakeGpsSample(100000, 0.0, 0.0),
+        MakeGpsSample(200000, 3.0, 0.0),
+        MakeGpsSample(300000, 6.0, 0.0),
+        MakeGpsSample(400000, 9.0, 0.0),
+        MakeGpsSample(500000, 12.0, 0.0),
+        MakeGpsSample(600000, 15.0, 0.0),
+    };
+
+    const std::vector<WheelSpeedSample> wheel_speed_samples =
+        MakeUniformWheelSpeedSamples(
+            {100000, 200000, 300000, 400000, 500000, 600000}, 22.0);
+
+    EXPECT_FALSE(ComputeStartupInitialization(
+                     imu_samples, gps_samples, wheel_speed_samples)
+                     .has_value());
+}
+
 TEST(
     ComputeStartupInitialization,
     AllowsReadyWhenWheelSupportedTravelReachesTenMetersEvenIfProjectedSeparationDoesNot) {

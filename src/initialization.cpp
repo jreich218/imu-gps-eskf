@@ -499,6 +499,24 @@ std::optional<StartupInitialization> FinalizeAtImuHandoff(
     return startup_initialization;
 }
 
+bool HasProcessablePostStartupGpsUpdate(
+    const StartupInitialization& startup_initialization,
+    const std::vector<ImuSample>& imu_samples,
+    const std::vector<GpsSample>& gps_samples) {
+    if (startup_initialization.first_unprocessed_gps_index >=
+        gps_samples.size()) {
+        return false;
+    }
+
+    if (startup_initialization.first_unprocessed_imu_index >=
+        imu_samples.size()) {
+        return false;
+    }
+
+    return gps_samples[startup_initialization.first_unprocessed_gps_index]
+               .utime <= imu_samples.back().utime;
+}
+
 }  // namespace
 
 std::optional<StartupInitialization> ComputeStartupInitialization(
@@ -563,7 +581,18 @@ std::optional<StartupInitialization> ComputeStartupInitialization(
         const ReadyEstimate2D ready_estimate = FormReadyEstimate(
             path_fit, wheel_speed_mps, selected_yaw_rad, gps_end_index + 1);
 
-        return FinalizeAtImuHandoff(ready_estimate, imu_samples);
+        const std::optional<StartupInitialization> startup_initialization =
+            FinalizeAtImuHandoff(ready_estimate, imu_samples);
+        if (!startup_initialization.has_value()) {
+            continue;
+        }
+
+        if (!HasProcessablePostStartupGpsUpdate(
+                *startup_initialization, imu_samples, gps_samples)) {
+            continue;
+        }
+
+        return startup_initialization;
     }
 
     return std::nullopt;
