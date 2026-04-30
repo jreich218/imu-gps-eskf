@@ -14,7 +14,7 @@ The trajectory for the run on the bundled data is shown below.
 
 - A C++ ESKF over position, velocity, and attitude.
 - Synthetic 2D GPS generation from pose data.
-- Startup initialization from early IMU and synthetic GPS samples.
+- Startup initialization from early IMU, synthetic GPS, and wheel-speed samples.
 - A bundled pose, IMU, and wheel-speed set so the app runs out of the box, plus support for a single matching nuScenes scene with pose, IMU, and wheel-speed inputs.
 - Unit tests and an end-to-end integration test.
 
