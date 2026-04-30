@@ -64,7 +64,7 @@ The handed-off speed magnitude comes from the smoothed robust wheel-speed magnit
 
 Startup then combines that magnitude with the chosen startup heading direction to form `v0_G`.
 
-On this pass, the heading construction is otherwise unchanged.
+The heading construction is otherwise unchanged.
 
 ## IMU handoff
 

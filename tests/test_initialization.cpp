@@ -33,18 +33,6 @@ GpsSample MakeGpsSample(std::int64_t utime, double x, double y) {
     return gps_sample;
 }
 
-PoseSample MakePoseSample(
-    std::int64_t utime, double x, double y, double yaw_rad, double speed_mps) {
-    PoseSample pose_sample;
-    pose_sample.utime = utime;
-    pose_sample.pos = Eigen::Vector3d(x, y, 0.0);
-    pose_sample.orientation = Eigen::Quaterniond(
-        Eigen::AngleAxisd(yaw_rad, Eigen::Vector3d::UnitZ()));
-    pose_sample.vel = Eigen::Vector3d(
-        speed_mps * std::cos(yaw_rad), speed_mps * std::sin(yaw_rad), 0.0);
-    return pose_sample;
-}
-
 double SpeedMpsToWheelRpm(double speed_mps) {
     const double circumference_m = 2.0 * kPi * kWheelRadiusM;
     return speed_mps * 60.0 / circumference_m;
@@ -250,7 +238,6 @@ TEST(
 
     std::vector<ImuSample> imu_samples;
     std::vector<GpsSample> gps_samples;
-    std::vector<PoseSample> pose_samples;
     for (std::size_t index = 0; index < 6; ++index) {
         const std::int64_t utime =
             100000 + static_cast<std::int64_t>(index) * 100000;
@@ -259,25 +246,20 @@ TEST(
 
         imu_samples.push_back(MakeImuSample(utime, kYawRateZ));
         gps_samples.push_back(MakeGpsSample(utime, xy.x(), xy.y()));
-        pose_samples.push_back(
-            MakePoseSample(utime, xy.x(), xy.y(), heading_rad, kSpeedMps));
     }
 
     const std::vector<WheelSpeedSample> wheel_speed_samples =
         MakeUniformWheelSpeedSamples(
             {100000, 200000, 300000, 400000, 500000, 600000}, kSpeedMps);
 
-    const StartupTraceResult trace_result = TraceStartupInitialization(
-        pose_samples, imu_samples, gps_samples, wheel_speed_samples);
+    const std::optional<StartupInitialization> startup_initialization =
+        ComputeStartupInitialization(
+            imu_samples, gps_samples, wheel_speed_samples);
 
-    ASSERT_TRUE(trace_result.ready_frame_index.has_value());
-    const StartupTraceFrame& ready_frame =
-        trace_result.frames[*trace_result.ready_frame_index];
-    EXPECT_LT(ready_frame.projected_separation_m,
-              ready_frame.required_projected_separation_m);
-    EXPECT_GE(ready_frame.wheel_supported_travel_m,
-              ready_frame.required_wheel_supported_travel_m);
-    EXPECT_EQ(ready_frame.end_utime, 500000);
+    ASSERT_TRUE(startup_initialization.has_value());
+    EXPECT_EQ(startup_initialization->previous_imu_utime, 500000);
+    EXPECT_EQ(startup_initialization->first_unprocessed_imu_index, 5U);
+    EXPECT_EQ(startup_initialization->first_unprocessed_gps_index, 5U);
 }
 
 TEST(ComputeStartupInitialization, UsesHandoffImuOrientationToBuildQ0GI) {
@@ -310,131 +292,4 @@ TEST(ComputeStartupInitialization, UsesHandoffImuOrientationToBuildQ0GI) {
     ASSERT_TRUE(startup_initialization.has_value());
     EXPECT_EQ(startup_initialization->first_unprocessed_imu_index, 5U);
     EXPECT_NEAR(YawFromQuaternion(startup_initialization->q0_GI), 0.0, 1e-9);
-}
-
-TEST(TraceStartupInitialization,
-     ReportsWheelSupportedTravelAndMatchesFinalInitialization) {
-    const std::vector<PoseSample> pose_samples = {
-        MakePoseSample(100000, 0.0, 0.0, 0.0, 30.0),
-        MakePoseSample(200000, 3.0, 0.0, 0.0, 30.0),
-        MakePoseSample(300000, 6.0, 0.0, 0.0, 30.0),
-        MakePoseSample(400000, 9.0, 0.0, 0.0, 30.0),
-        MakePoseSample(500000, 12.0, 0.0, 0.0, 30.0),
-        MakePoseSample(600000, 15.0, 0.0, 0.0, 30.0),
-    };
-
-    const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0),
-        MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0),
-        MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0),
-        MakeImuSample(600000, 0.0),
-    };
-
-    const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(0, -1.0, 0.0),
-        MakeGpsSample(100000, 0.0, 0.0),
-        MakeGpsSample(200000, 3.0, 0.0),
-        MakeGpsSample(300000, 6.0, 0.0),
-        MakeGpsSample(400000, 9.0, 0.0),
-        MakeGpsSample(500000, 12.0, 0.0),
-        MakeGpsSample(600000, 15.0, 0.0),
-    };
-
-    const std::vector<WheelSpeedSample> wheel_speed_samples =
-        MakeUniformWheelSpeedSamples(
-            {100000, 200000, 300000, 400000, 500000, 600000}, 30.0);
-
-    const StartupTraceResult trace_result = TraceStartupInitialization(
-        pose_samples, imu_samples, gps_samples, wheel_speed_samples);
-    const std::optional<StartupInitialization> startup_initialization =
-        ComputeStartupInitialization(
-            imu_samples, gps_samples, wheel_speed_samples);
-
-    ASSERT_TRUE(trace_result.first_usable_gps_index.has_value());
-    EXPECT_EQ(*trace_result.first_usable_gps_index, 1U);
-    ASSERT_TRUE(trace_result.ready_frame_index.has_value());
-    ASSERT_TRUE(trace_result.startup_initialization.has_value());
-    ASSERT_TRUE(startup_initialization.has_value());
-
-    const StartupTraceFrame& ready_frame =
-        trace_result.frames[*trace_result.ready_frame_index];
-    EXPECT_EQ(ready_frame.end_utime, 500000);
-    EXPECT_DOUBLE_EQ(ready_frame.projected_separation_m, 12.0);
-    EXPECT_DOUBLE_EQ(ready_frame.required_projected_separation_m, 10.0);
-    EXPECT_DOUBLE_EQ(ready_frame.wheel_speed_mps, 30.0);
-    EXPECT_DOUBLE_EQ(ready_frame.required_wheel_supported_travel_m, 10.0);
-    EXPECT_DOUBLE_EQ(ready_frame.wheel_supported_travel_m, 12.0);
-    EXPECT_NEAR(ready_frame.fitted_endpoint_xy.x(), 12.0, 1e-9);
-    EXPECT_NEAR(ready_frame.fitted_endpoint_xy.y(), 0.0, 1e-9);
-    EXPECT_NEAR(ready_frame.selected_yaw_rad, 0.0, 1e-9);
-    EXPECT_NEAR(ready_frame.selected_speed_mps, 30.0, 1e-9);
-    EXPECT_NEAR(ready_frame.truth.position_xy.x(), 12.0, 1e-9);
-    EXPECT_NEAR(ready_frame.truth.position_xy.y(), 0.0, 1e-9);
-    EXPECT_NEAR(ready_frame.truth.yaw_rad, 0.0, 1e-9);
-    EXPECT_NEAR(ready_frame.truth.speed_mps, 30.0, 1e-9);
-    EXPECT_EQ(ready_frame.path_xy.size(), 100U);
-
-    EXPECT_EQ(trace_result.startup_initialization->first_unprocessed_imu_index,
-              startup_initialization->first_unprocessed_imu_index);
-    EXPECT_EQ(trace_result.startup_initialization->first_unprocessed_gps_index,
-              startup_initialization->first_unprocessed_gps_index);
-    EXPECT_EQ(trace_result.startup_initialization->previous_imu_utime,
-              startup_initialization->previous_imu_utime);
-    EXPECT_TRUE(trace_result.startup_initialization->p0_G.isApprox(
-        startup_initialization->p0_G));
-    EXPECT_TRUE(trace_result.startup_initialization->v0_G.isApprox(
-        startup_initialization->v0_G));
-    EXPECT_TRUE(trace_result.startup_initialization->q0_GI.isApprox(
-        startup_initialization->q0_GI));
-}
-
-TEST(TraceStartupInitialization,
-     ReturnsFramesWithoutReadyWhenWheelSupportedTravelNeverReachesThreshold) {
-    const std::vector<PoseSample> pose_samples = {
-        MakePoseSample(100000, 0.0, 0.0, 0.0, 0.0),
-        MakePoseSample(200000, 1.0, 0.0, 0.0, 0.0),
-        MakePoseSample(300000, 2.0, 0.0, 0.0, 0.0),
-        MakePoseSample(400000, 3.0, 0.0, 0.0, 0.0),
-        MakePoseSample(500000, 4.0, 0.0, 0.0, 0.0),
-        MakePoseSample(600000, 5.0, 0.0, 0.0, 0.0),
-        MakePoseSample(700000, 6.0, 0.0, 0.0, 0.0),
-    };
-
-    const std::vector<ImuSample> imu_samples = {
-        MakeImuSample(100000, 0.0),
-        MakeImuSample(200000, 0.0),
-        MakeImuSample(300000, 0.0),
-        MakeImuSample(400000, 0.0),
-        MakeImuSample(500000, 0.0),
-        MakeImuSample(600000, 0.0),
-        MakeImuSample(700000, 0.0),
-    };
-
-    const std::vector<GpsSample> gps_samples = {
-        MakeGpsSample(100000, 0.0, 0.0),
-        MakeGpsSample(200000, 1.0, 0.0),
-        MakeGpsSample(300000, 2.0, 0.0),
-        MakeGpsSample(400000, 3.0, 0.0),
-        MakeGpsSample(500000, 4.0, 0.0),
-        MakeGpsSample(600000, 5.0, 0.0),
-        MakeGpsSample(700000, 6.0, 0.0),
-    };
-
-    const std::vector<WheelSpeedSample> wheel_speed_samples =
-        MakeUniformWheelSpeedSamples(
-            {100000, 200000, 300000, 400000, 500000, 600000, 700000}, 0.0);
-
-    const StartupTraceResult trace_result = TraceStartupInitialization(
-        pose_samples, imu_samples, gps_samples, wheel_speed_samples);
-
-    ASSERT_TRUE(trace_result.first_usable_gps_index.has_value());
-    EXPECT_EQ(*trace_result.first_usable_gps_index, 0U);
-    EXPECT_FALSE(trace_result.frames.empty());
-    EXPECT_FALSE(trace_result.ready_frame_index.has_value());
-    EXPECT_FALSE(trace_result.startup_initialization.has_value());
-    EXPECT_DOUBLE_EQ(trace_result.frames.back().wheel_supported_travel_m, 0.0);
-    EXPECT_DOUBLE_EQ(
-        trace_result.frames.back().required_wheel_supported_travel_m, 10.0);
 }

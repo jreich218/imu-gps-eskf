@@ -213,9 +213,9 @@ For nuScenes CAN-bus inputs, `IMU-GPS-ESKF` is intended to be used only on the s
 
 The app does not check scene membership at runtime. Users are expected to supply only scene IDs from the supported-scene manifest.
 
-### How the current manifest was produced
+### Supported-scene manifest
 
-The current manifest was produced offline from the app's current startup and runtime behavior.
+The supported-scene manifest is produced offline from the app's startup and runtime behavior.
 
 First, run the current app across all `979` nuScenes CAN-bus scenes and keep only the scenes that complete startup and run successfully.
 
@@ -227,4 +227,4 @@ A completed nuScenes scene is included in the supported-scene manifest if and on
 
 This is a true-excursion rule, not a total-travel rule. A scene can still be excluded after nontrivial motion if it never opens up `10 m` of horizontal separation from the startup reference pose.
 
-The pruning rule above is not part of runtime startup logic. It is the offline procedure used to define the current supported nuScenes operating set.
+The pruning rule above is not part of runtime startup logic. It defines the supported nuScenes operating set.
