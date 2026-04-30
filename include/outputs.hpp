@@ -20,6 +20,8 @@
  * @param gps_samples GPS samples used during the run.
  * @return Path of the written JSON file.
  *
+ * @throws std::filesystem::filesystem_error If the output directory cannot be
+ *     created.
  * @throws std::runtime_error If output/gps.json cannot be opened for writing.
  */
 std::filesystem::path WriteGpsJson(const std::vector<GpsSample>& gps_samples);
@@ -30,6 +32,8 @@ std::filesystem::path WriteGpsJson(const std::vector<GpsSample>& gps_samples);
  * @param run_result In-memory result from the runtime loop.
  * @return Path of the written CSV file.
  *
+ * @throws std::filesystem::filesystem_error If the output directory cannot be
+ *     created.
  * @throws std::runtime_error If output/eskf_sim_log.csv cannot be opened for
  *     writing.
  */

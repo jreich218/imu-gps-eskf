@@ -48,7 +48,7 @@ Select the input set for the run.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L23">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L25">source</a></div>
 
 ```cpp
 SceneInputs ChooseSceneInputs();
@@ -67,6 +67,8 @@ that scene is used. Otherwise the bundled `scene_pose.json`,
 
 #### Throws
 
+`std::filesystem::filesystem_error` If `scenarios` cannot be iterated.
+
 `std::runtime_error` If the bundled set is needed but missing.
 
 ### `LoadScene` {#load-scene}
@@ -76,7 +78,7 @@ Load the selected pose, IMU, and wheel-speed streams.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L36">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_io.hpp#L38">source</a></div>
 
 ```cpp
 LoadedScene LoadScene(const SceneInputs& scene_inputs);
@@ -98,7 +100,7 @@ dropped during load.
 
 #### Throws
 
-`std::runtime_error` If either selected file cannot be opened.
+`std::runtime_error` If a required selected file cannot be opened.
 
 ## GPS Generation {#gps-generation}
 
@@ -144,7 +146,7 @@ Compute the startup initialization from IMU, GPS, and wheel-speed samples.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L31">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L32">source</a></div>
 
 ```cpp
 std::optional<StartupInitialization> ComputeStartupInitialization(
@@ -220,7 +222,7 @@ Write the generated synthetic GPS samples to output/gps.json.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L25">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L27">source</a></div>
 
 ```cpp
 std::filesystem::path WriteGpsJson(const std::vector<GpsSample>& gps_samples);
@@ -237,6 +239,8 @@ Path of the written JSON file.
 
 #### Throws
 
+`std::filesystem::filesystem_error` If the output directory cannot be created.
+
 `std::runtime_error` If output/gps.json cannot be opened for writing.
 
 ### `WriteEskfSimLogCsv` {#write-eskf-sim-log-csv}
@@ -246,7 +250,7 @@ Write one CSV row per GPS update to output/eskf_sim_log.csv.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L36">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L40">source</a></div>
 
 ```cpp
 std::filesystem::path WriteEskfSimLogCsv(const EskfRunResult& run_result);
@@ -263,6 +267,8 @@ Path of the written CSV file.
 
 #### Throws
 
+`std::filesystem::filesystem_error` If the output directory cannot be created.
+
 `std::runtime_error` If output/eskf_sim_log.csv cannot be opened for writing.
 
 ### `PrintRunSummary` {#print-run-summary}
@@ -272,7 +278,7 @@ Print the successful-run summary.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L48">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/outputs.hpp#L52">source</a></div>
 
 ```cpp
 void PrintRunSummary(const EskfRunResult& run_result,

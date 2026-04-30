@@ -18,6 +18,8 @@
  *
  * @return Selected pose, IMU, and wheel-speed file paths.
  *
+ * @throws std::filesystem::filesystem_error If `scenarios` cannot be
+ *     iterated.
  * @throws std::runtime_error If the bundled set is needed but missing.
  */
 SceneInputs ChooseSceneInputs();
