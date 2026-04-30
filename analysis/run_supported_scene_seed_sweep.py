@@ -17,7 +17,7 @@ from statistics import mean, median
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 APP_PATH = REPO_ROOT / "build" / "imu-gps-eskf"
-SCENE_ROOT = Path("/data/sets/nuscenes/can_bus")
+SCENE_ROOT = Path("/data/sets/nuscenes/can_bus") # Replace with path to user-downloaded nuScenes CAN Bus files
 SUPPORTED_SCENES_PATH = REPO_ROOT / "metadata" / "supported_nuscenes_scenes.txt"
 SEED_START = 1
 SEED_END = 100
