@@ -146,7 +146,7 @@ Compute the startup initialization from IMU, GPS, and wheel-speed samples.
 #### Signature
 
 ::: {.cpp-api-signature-block}
-<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L32">source</a></div>
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L76">source</a></div>
 
 ```cpp
 std::optional<StartupInitialization> ComputeStartupInitialization(
@@ -171,6 +171,41 @@ state suitable for handoff.
 
 The returned object contains the initial state together with the first IMU
 and GPS indices for the live post-startup run.
+
+### `TraceStartupInitialization` {#trace-startup-initialization}
+
+Trace the startup evaluation across growing GPS prefixes.
+
+#### Signature
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L94">source</a></div>
+
+```cpp
+StartupTraceResult TraceStartupInitialization(
+    const std::vector<PoseSample>& pose_samples,
+    const std::vector<ImuSample>& imu_samples,
+    const std::vector<GpsSample>& gps_samples,
+    const std::vector<WheelSpeedSample>& wheel_speed_samples);
+```
+:::
+
+#### Inputs
+
+- `pose_samples`: Loaded pose samples used for truth lookup.
+- `imu_samples`: Loaded IMU samples.
+- `gps_samples`: Generated GPS samples.
+- `wheel_speed_samples`: Loaded wheel-speed samples.
+
+#### Output
+
+The per-prefix startup trace and optional final handoff state.
+
+#### Non-obvious behavior
+
+The returned trace records the quantities the startup code computes for each
+tested GPS prefix. If startup succeeds, the trace also includes the resulting
+handoff state.
 
 ## Runtime Loop {#runtime-loop}
 

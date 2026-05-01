@@ -13,6 +13,9 @@ body-classes: "cpp-api-page cpp-api-types-page"
 | struct | [`LoadedScene`](#loaded-scene) | Loaded reference-pose, IMU, and wheel-speed streams. |
 | struct | [`GpsSample`](#gps-sample) | One synthetic 2D GPS sample. |
 | struct | [`StartupInitialization`](#startup-initialization) | Initialization data required to start the filter. |
+| struct | [`StartupTraceTruthState`](#startup-trace-truth-state) | Truth values from the pose stream at one startup frame endpoint. |
+| struct | [`StartupTraceFrame`](#startup-trace-frame) | One startup-prefix trace frame. |
+| struct | [`StartupTraceResult`](#startup-trace-result) | Full startup trace and final handoff result. |
 | struct | [`GpsUpdateResult`](#gps-update-result) | Diagnostics from one 2D GPS update. |
 | struct | [`EskfLogRow`](#eskf-log-row) | One in-memory log row corresponding to one GPS update. |
 | struct | [`EskfRunResult`](#eskf-run-result) | In-memory result from a full post-startup ESKF run. |
@@ -163,6 +166,82 @@ struct StartupInitialization
 - `first_unprocessed_imu_index`: First IMU sample to pass to `Eskf::Predict` after initialization.
 - `first_unprocessed_gps_index`: First GPS sample not used by initialization.
 - `previous_imu_utime`: IMU timestamp of the stored state used as t_{k-1} by the first post-initialization Predict.
+
+## `StartupTraceTruthState` {#startup-trace-truth-state}
+
+Truth values from the pose stream at one startup frame endpoint.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L20">source</a></div>
+
+```cpp
+struct StartupTraceTruthState
+```
+:::
+
+**Fields**
+
+- `position_xy`: Truth position in meters.
+- `yaw_rad`: Truth yaw in radians.
+- `speed_mps`: Truth speed magnitude in m/s.
+
+## `StartupTraceFrame` {#startup-trace-frame}
+
+One startup-prefix trace frame.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L27">source</a></div>
+
+```cpp
+struct StartupTraceFrame
+```
+:::
+
+**Fields**
+
+- `fit_end_index`: Inclusive GPS end index for this frame.
+- `gps_points_used`: Number of GPS points in the prefix.
+- `end_utime`: Timestamp at the frame endpoint.
+- `latest_gps_xy`: Latest GPS point in the prefix.
+- `fitted_endpoint_xy`: Fitted path endpoint position.
+- `fitted_velocity_xy`: Fitted path endpoint velocity.
+- `fitted_speed_mps`: Speed from the fitted endpoint tangent.
+- `fitted_yaw_rad`: Yaw from the fitted endpoint tangent.
+- `selected_yaw_rad`: Final startup yaw choice.
+- `global_yaw_rad`: Global yaw candidate.
+- `pca_yaw_rad`: Principal-direction yaw.
+- `projected_separation_m`: PCA projected start-to-end span.
+- `line_like`: Whether the PCA cloud is line-like.
+- `wheel_speed_mps`: Smoothed robust wheel-speed magnitude.
+- `wheel_supported_travel_m`: Wheel-supported travel from startup begin to this frame.
+- `required_wheel_supported_travel_m`: Active wheel-supported travel gate.
+- `path_xy`: Sampled fitted path points.
+- `truth`: Truth at this frame endpoint.
+
+## `StartupTraceResult` {#startup-trace-result}
+
+Full startup trace and final handoff result.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L55">source</a></div>
+
+```cpp
+struct StartupTraceResult
+```
+:::
+
+**Fields**
+
+- `first_usable_gps_index`: First GPS index startup may use.
+- `frames`: One frame per tested startup prefix.
+- `ready_frame_index`: Index of the first ready frame, if any.
+- `startup_initialization`: Final handoff state, if startup succeeds.
 
 ## `GpsUpdateResult` {#gps-update-result}
 

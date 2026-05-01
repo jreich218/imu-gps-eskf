@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <unordered_map>
 
 namespace {
 
@@ -18,6 +19,7 @@ constexpr double kMaxLineLikeSecondToFirstVarianceRatio = 0.1;
 constexpr double kClusterYawWeight = 0.75;
 constexpr double kWheelSpeedSmoothingWindowSec = 0.3;
 constexpr double kWheelRadiusM = 0.305;
+constexpr std::size_t kPathTraceSampleCount = 100;
 
 struct QuadraticPathFit {
     Eigen::Vector3d coeff_x = Eigen::Vector3d::Zero();
@@ -46,12 +48,26 @@ struct WheelMotionProfile {
     std::vector<double> cumulative_distance_m;
 };
 
+using TruthStateMap =
+    std::unordered_map<std::int64_t, StartupTraceTruthState>;
+
 double WrapAngle(double angle_rad) {
     return std::atan2(std::sin(angle_rad), std::cos(angle_rad));
 }
 
 Eigen::Vector2d UnitDirection(double yaw_rad) {
     return Eigen::Vector2d(std::cos(yaw_rad), std::sin(yaw_rad));
+}
+
+double YawFromQuaternion(const Eigen::Quaterniond& q) {
+    const Eigen::Quaterniond normalized = q.normalized();
+    const double siny_cosp =
+        2.0 * (normalized.w() * normalized.z() +
+               normalized.x() * normalized.y());
+    const double cosy_cosp =
+        1.0 - 2.0 * (normalized.y() * normalized.y() +
+                     normalized.z() * normalized.z());
+    return std::atan2(siny_cosp, cosy_cosp);
 }
 
 Eigen::Quaterniond QuaternionFromYaw(double yaw_rad) {
@@ -290,6 +306,32 @@ Eigen::Vector2d VelocityAt(const QuadraticPathFit& path_fit, double tau_s) {
         path_fit.coeff_y.y() + 2.0 * path_fit.coeff_y.z() * tau_s);
 }
 
+std::vector<Eigen::Vector2d> SamplePathPoints(
+    const QuadraticPathFit& path_fit,
+    const std::vector<GpsSample>& gps_samples,
+    std::size_t first_index,
+    std::size_t last_index) {
+    const double tau_start_s =
+        static_cast<double>(gps_samples[first_index].utime -
+                            gps_samples[last_index].utime) *
+        kSecPerUsec;
+
+    std::vector<Eigen::Vector2d> path_points;
+    path_points.reserve(kPathTraceSampleCount);
+    for (std::size_t sample_index = 0; sample_index < kPathTraceSampleCount;
+         ++sample_index) {
+        const double alpha =
+            kPathTraceSampleCount == 1
+                ? 0.0
+                : static_cast<double>(sample_index) /
+                      static_cast<double>(kPathTraceSampleCount - 1);
+        const double tau_s = (1.0 - alpha) * tau_start_s;
+        path_points.push_back(PositionAt(path_fit, tau_s));
+    }
+
+    return path_points;
+}
+
 double DeltaYawBetween(const std::vector<ImuSample>& imu_samples,
                        std::int64_t start_utime,
                        std::int64_t end_utime) {
@@ -361,6 +403,21 @@ PrincipalDirectionSummary SummarizePrincipalDirection(
     principal_direction.projected_start_to_end_m =
         std::abs(principal_direction.axis.dot(start_to_end));
     return principal_direction;
+}
+
+TruthStateMap BuildTruthStateMap(const std::vector<PoseSample>& pose_samples) {
+    TruthStateMap truth_by_utime;
+    truth_by_utime.reserve(pose_samples.size());
+
+    for (const PoseSample& pose_sample : pose_samples) {
+        StartupTraceTruthState truth;
+        truth.position_xy = pose_sample.pos.head<2>();
+        truth.yaw_rad = YawFromQuaternion(pose_sample.orientation);
+        truth.speed_mps = std::abs(pose_sample.vel.x());
+        truth_by_utime.emplace(pose_sample.utime, truth);
+    }
+
+    return truth_by_utime;
 }
 
 bool IsLineLike(const PrincipalDirectionSummary& principal_direction) {
@@ -518,6 +575,125 @@ bool HasProcessablePostStartupGpsUpdate(
 }
 
 }  // namespace
+
+StartupTraceResult TraceStartupInitialization(
+    const std::vector<PoseSample>& pose_samples,
+    const std::vector<ImuSample>& imu_samples,
+    const std::vector<GpsSample>& gps_samples,
+    const std::vector<WheelSpeedSample>& wheel_speed_samples) {
+    StartupTraceResult trace_result;
+
+    trace_result.first_usable_gps_index =
+        FindFirstUsableGpsIndex(imu_samples, gps_samples);
+    if (!trace_result.first_usable_gps_index.has_value()) {
+        return trace_result;
+    }
+
+    const std::size_t startup_begin_gps_index =
+        *trace_result.first_usable_gps_index;
+    const std::size_t gps_points_available =
+        gps_samples.size() - startup_begin_gps_index;
+    if (!HasMinimumPointsForFit(gps_points_available)) {
+        return trace_result;
+    }
+    if (wheel_speed_samples.empty()) {
+        return trace_result;
+    }
+
+    const bool have_truth = !pose_samples.empty();
+    const TruthStateMap truth_by_utime =
+        have_truth ? BuildTruthStateMap(pose_samples) : TruthStateMap{};
+    const WheelMotionProfile wheel_motion_profile =
+        BuildWheelMotionProfile(wheel_speed_samples);
+    const std::int64_t startup_begin_utime =
+        gps_samples[startup_begin_gps_index].utime;
+
+    for (std::size_t gps_end_index =
+             startup_begin_gps_index + (kMinFitPointCount - 1);
+         gps_end_index < gps_samples.size();
+         ++gps_end_index) {
+        const QuadraticPathFit path_fit = FitQuadraticPath(
+            gps_samples, startup_begin_gps_index, gps_end_index);
+
+        const Eigen::Vector2d endpoint_velocity = VelocityAt(path_fit, 0.0);
+        const double endpoint_speed_mps = endpoint_velocity.norm();
+        if (!(endpoint_speed_mps > kMinEndpointSpeed)) {
+            continue;
+        }
+
+        const PrincipalDirectionSummary principal_direction =
+            SummarizePrincipalDirection(
+                gps_samples, startup_begin_gps_index, gps_end_index);
+        const std::int64_t ready_utime = path_fit.end_utime;
+        const double global_yaw_rad = ComputeGlobalYaw(
+            principal_direction, imu_samples, startup_begin_utime, ready_utime);
+        const double cluster_yaw_rad = ComputeClusterYaw(
+            gps_samples, startup_begin_gps_index, gps_end_index, global_yaw_rad);
+        const double selected_yaw_rad =
+            BlendYaw(cluster_yaw_rad, global_yaw_rad, kClusterYawWeight);
+        const double wheel_speed_mps = InterpolateWheelProfileValue(
+            wheel_motion_profile, wheel_motion_profile.smoothed_speed_mps,
+            ready_utime);
+        const double wheel_supported_travel_m = WheelSupportedTravelBetween(
+            wheel_motion_profile, startup_begin_utime, ready_utime);
+
+        StartupTraceFrame frame;
+        frame.fit_end_index = gps_end_index;
+        frame.gps_points_used =
+            gps_end_index - startup_begin_gps_index + 1;
+        frame.end_utime = ready_utime;
+        frame.latest_gps_xy = gps_samples[gps_end_index].xy;
+        frame.fitted_endpoint_xy = PositionAt(path_fit, 0.0);
+        frame.fitted_velocity_xy = endpoint_velocity;
+        frame.fitted_speed_mps = endpoint_speed_mps;
+        frame.fitted_yaw_rad =
+            std::atan2(endpoint_velocity.y(), endpoint_velocity.x());
+        frame.selected_yaw_rad = selected_yaw_rad;
+        frame.global_yaw_rad = global_yaw_rad;
+        frame.pca_yaw_rad = std::atan2(principal_direction.axis.y(),
+                                       principal_direction.axis.x());
+        frame.projected_separation_m =
+            principal_direction.projected_start_to_end_m;
+        frame.line_like = IsLineLike(principal_direction);
+        frame.wheel_speed_mps = wheel_speed_mps;
+        frame.wheel_supported_travel_m = wheel_supported_travel_m;
+        frame.required_wheel_supported_travel_m =
+            kRequiredWheelSupportedTravelM;
+        frame.path_xy = SamplePathPoints(
+            path_fit, gps_samples, startup_begin_gps_index, gps_end_index);
+        if (have_truth) {
+            const auto truth_it = truth_by_utime.find(ready_utime);
+            if (truth_it == truth_by_utime.end()) {
+                throw std::runtime_error(
+                    "Startup trace missing truth pose at GPS timestamp.");
+            }
+            frame.truth = truth_it->second;
+        }
+        trace_result.frames.push_back(frame);
+
+        if (wheel_supported_travel_m < kRequiredWheelSupportedTravelM) {
+            continue;
+        }
+
+        const ReadyEstimate2D ready_estimate = FormReadyEstimate(
+            path_fit, wheel_speed_mps, selected_yaw_rad, gps_end_index + 1);
+        const std::optional<StartupInitialization> startup_initialization =
+            FinalizeAtImuHandoff(ready_estimate, imu_samples);
+        if (!startup_initialization.has_value()) {
+            continue;
+        }
+        if (!HasProcessablePostStartupGpsUpdate(
+                *startup_initialization, imu_samples, gps_samples)) {
+            continue;
+        }
+
+        trace_result.ready_frame_index = trace_result.frames.size() - 1;
+        trace_result.startup_initialization = startup_initialization;
+        return trace_result;
+    }
+
+    return trace_result;
+}
 
 std::optional<StartupInitialization> ComputeStartupInitialization(
     const std::vector<ImuSample>& imu_samples,

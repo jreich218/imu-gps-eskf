@@ -12,7 +12,7 @@ There are `876` supported nuScenes scenes, they are listed in `metadata/supporte
 
 Across the `876` supported scenes run over `100` GPS-noise seeds, the app completed all `87,600` runs, beat raw GPS in `87,598` of them, and reduced per-seed median horizontal RMSE from `2.55858–3.09239 m` for raw GPS to `0.560191–1.10368 m` for the ESKF.
 
-The two cases where the app didn't beat GPS are known to come from poor headings passed to the filter from startup. The same startup-focused future work discussed above would very likely resolve these two heading issues.
+The retained non-beating geometry workup in `analysis/changing_seed/results/main_15e0b11_supported_scene_seed_sweep_15e0b11/non_beating_geometry` shows large startup handoff heading errors in both cases, so the same startup-focused future work discussed above would very likely resolve them.
 
 The trajectory for the run on the bundled data is shown below.
 
