@@ -1,0 +1,34 @@
+---
+title: "Overview"
+toc: true
+aliases:
+  - /docs/index.html
+---
+
+## Conventions
+
+[Conventions](conventions/index.qmd) discusses frames, notation, quaternion representation, and sign conventions.
+
+## Inputs
+
+[Inputs](inputs/index.qmd) discusses filenames, runtime selection, time properties, field schemas, field meanings, and dataset-specific edge cases.
+
+## Synthetic GPS
+
+[Synthetic GPS](synthetic_gps/index.qmd) discusses how the pose stream is turned into the synthetic horizontal GPS measurements used by startup and update.
+
+## Initialization
+
+[Initialization](initialization/index.qmd) discusses how the app turns early IMU, synthetic GPS, and wheel-speed samples into the startup handoff state for the live filter.
+
+## ESKF
+
+[ESKF](eskf/index.qmd) discusses the filter state, IMU propagation, 2D GPS update, and the post-startup runtime loop.
+
+## Outputs
+
+[Outputs](outputs/index.qmd) discusses the written run artifacts and the successful-run summary.
+
+## API
+
+[API](api/index.qmd) discusses the public C++ declarations by `Groups` and `Types`.

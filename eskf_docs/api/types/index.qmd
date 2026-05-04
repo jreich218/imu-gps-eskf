@@ -1,0 +1,404 @@
+---
+title: "Types"
+description: "Browse the API reference by type."
+body-classes: "cpp-api-page cpp-api-types-page"
+---
+
+| Kind | Name | Description |
+| --- | --- | --- |
+| struct | [`SceneInputs`](#scene-inputs) | Selected input file paths. |
+| struct | [`PoseSample`](#pose-sample) | One sample from the reference pose stream. |
+| struct | [`ImuSample`](#imu-sample) | One sample from the input IMU stream. |
+| struct | [`WheelSpeedSample`](#wheel-speed-sample) | One wheel-speed CAN sample from `zoe_veh_info`. |
+| struct | [`LoadedScene`](#loaded-scene) | Loaded reference-pose, IMU, and wheel-speed streams. |
+| struct | [`GpsSample`](#gps-sample) | One synthetic 2D GPS sample. |
+| struct | [`StartupInitialization`](#startup-initialization) | Initialization data required to start the filter. |
+| struct | [`StartupTraceTruthState`](#startup-trace-truth-state) | Truth values from the pose stream at one startup frame endpoint. |
+| struct | [`StartupTraceFrame`](#startup-trace-frame) | One startup-prefix trace frame. |
+| struct | [`StartupTraceResult`](#startup-trace-result) | Full startup trace and final handoff result. |
+| struct | [`GpsUpdateResult`](#gps-update-result) | Diagnostics from one 2D GPS update. |
+| struct | [`EskfLogRow`](#eskf-log-row) | One in-memory log row corresponding to one GPS update. |
+| struct | [`EskfRunResult`](#eskf-run-result) | In-memory result from a full post-startup ESKF run. |
+| class | [`Eskf`](#eskf) | Error-state Kalman filter over position, velocity, and attitude. |
+
+## `SceneInputs` {#scene-inputs}
+
+Selected input file paths.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L12">source</a></div>
+
+```cpp
+struct SceneInputs
+```
+:::
+
+**Fields**
+
+- `pose_path`: Pose file path.
+- `imu_path`: IMU file path.
+- `wheel_speed_path`: Wheel-speed file path.
+
+## `PoseSample` {#pose-sample}
+
+One sample from the reference pose stream.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L19">source</a></div>
+
+```cpp
+struct PoseSample
+```
+:::
+
+**Fields**
+
+- `utime`: Timestamp in microseconds as std::int64_t.
+- `pos`: Reference global position in meters.
+- `orientation`: Reference orientation quaternion in [w, x, y, z].
+- `vel`: Reference ego-frame velocity sample in m/s.
+
+## `ImuSample` {#imu-sample}
+
+One sample from the input IMU stream.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L29">source</a></div>
+
+```cpp
+struct ImuSample
+```
+:::
+
+**Fields**
+
+- `utime`: Timestamp in microseconds.
+- `specific_force`: Measured specific force in frame I.
+- `rotation_rate`: Measured angular velocity in frame I.
+- `q_AI`: Quaternion from frame I to gravity-aligned frame A.
+
+## `WheelSpeedSample` {#wheel-speed-sample}
+
+One wheel-speed CAN sample from `zoe_veh_info`.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L43">source</a></div>
+
+```cpp
+struct WheelSpeedSample
+```
+:::
+
+**Fields**
+
+- `utime`: Timestamp in microseconds.
+- `fl_wheel_speed_rpm`: Front-left wheel speed in rpm.
+- `fr_wheel_speed_rpm`: Front-right wheel speed in rpm.
+- `rl_wheel_speed_rpm`: Rear-left wheel speed in rpm.
+- `rr_wheel_speed_rpm`: Rear-right wheel speed in rpm.
+
+## `LoadedScene` {#loaded-scene}
+
+Loaded reference-pose, IMU, and wheel-speed streams.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L52">source</a></div>
+
+```cpp
+struct LoadedScene
+```
+:::
+
+**Fields**
+
+- `pose_samples`: Loaded pose samples.
+- `imu_samples`: Loaded IMU samples.
+- `wheel_speed_samples`: Loaded wheel-speed samples.
+
+## `GpsSample` {#gps-sample}
+
+One synthetic 2D GPS sample.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L60">source</a></div>
+
+```cpp
+struct GpsSample
+```
+:::
+
+**Fields**
+
+- `utime`: Timestamp in microseconds as std::int64_t.
+- `xy`: Measured horizontal position in meters.
+
+## `StartupInitialization` {#startup-initialization}
+
+Initialization data required to start the filter.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/scene_types.hpp#L66">source</a></div>
+
+```cpp
+struct StartupInitialization
+```
+:::
+
+**Fields**
+
+- `v0_G`: Initial velocity in frame G at `previous_imu_utime`.
+- `p0_G`: Initial position in frame G at `previous_imu_utime`.
+- `q0_GI`: Initial attitude quaternion from the startup state's IMU frame to G at `previous_imu_utime`.
+- `first_unprocessed_imu_index`: First IMU sample to pass to `Eskf::Predict` after initialization.
+- `first_unprocessed_gps_index`: First GPS sample not used by initialization.
+- `previous_imu_utime`: IMU timestamp of the stored state used as t_{k-1} by the first post-initialization Predict.
+
+## `StartupTraceTruthState` {#startup-trace-truth-state}
+
+Truth values from the pose stream at one startup frame endpoint.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L20">source</a></div>
+
+```cpp
+struct StartupTraceTruthState
+```
+:::
+
+**Fields**
+
+- `position_xy`: Truth position in meters.
+- `yaw_rad`: Truth yaw in radians.
+- `speed_mps`: Truth speed magnitude in m/s.
+
+## `StartupTraceFrame` {#startup-trace-frame}
+
+One startup-prefix trace frame.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L27">source</a></div>
+
+```cpp
+struct StartupTraceFrame
+```
+:::
+
+**Fields**
+
+- `fit_end_index`: Inclusive GPS end index for this frame.
+- `gps_points_used`: Number of GPS points in the prefix.
+- `end_utime`: Timestamp at the frame endpoint.
+- `latest_gps_xy`: Latest GPS point in the prefix.
+- `fitted_endpoint_xy`: Fitted path endpoint position.
+- `fitted_velocity_xy`: Fitted path endpoint velocity.
+- `fitted_speed_mps`: Speed from the fitted endpoint tangent.
+- `fitted_yaw_rad`: Yaw from the fitted endpoint tangent.
+- `selected_yaw_rad`: Final startup yaw choice.
+- `global_yaw_rad`: Global yaw candidate.
+- `pca_yaw_rad`: Principal-direction yaw.
+- `projected_separation_m`: PCA projected start-to-end span.
+- `line_like`: Whether the PCA cloud is line-like.
+- `wheel_speed_mps`: Smoothed robust wheel-speed magnitude.
+- `wheel_supported_travel_m`: Wheel-supported travel from startup begin to this frame.
+- `required_wheel_supported_travel_m`: Active wheel-supported travel gate.
+- `path_xy`: Sampled fitted path points.
+- `truth`: Truth at this frame endpoint.
+
+## `StartupTraceResult` {#startup-trace-result}
+
+Full startup trace and final handoff result.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/initialization.hpp#L55">source</a></div>
+
+```cpp
+struct StartupTraceResult
+```
+:::
+
+**Fields**
+
+- `first_usable_gps_index`: First GPS index startup may use.
+- `frames`: One frame per tested startup prefix.
+- `ready_frame_index`: Index of the first ready frame, if any.
+- `startup_initialization`: Final handoff state, if startup succeeds.
+
+## `GpsUpdateResult` {#gps-update-result}
+
+Diagnostics from one 2D GPS update.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L11">source</a></div>
+
+```cpp
+struct GpsUpdateResult
+```
+:::
+
+**Fields**
+
+- `innovation_xy`: Horizontal innovation in meters.
+- `nis`: Normalized innovation squared.
+
+## `EskfLogRow` {#eskf-log-row}
+
+One in-memory log row corresponding to one GPS update.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/runtime_loop.hpp#L11">source</a></div>
+
+```cpp
+struct EskfLogRow
+```
+:::
+
+**Fields**
+
+- `utime`: GPS update timestamp in microseconds.
+- `estimated_position_G`: Estimated position after the GPS update.
+- `gps_xy`: GPS measurement used in the update.
+- `true_xy`: Pose-truth horizontal position at the same timestamp.
+- `innovation_xy`: Horizontal innovation returned by the GPS update.
+- `nis`: Normalized innovation squared for the update.
+- `estimator_error_xy`: Horizontal estimator error relative to pose truth.
+- `estimator_error_norm`: Norm of estimator_error_xy.
+
+## `EskfRunResult` {#eskf-run-result}
+
+In-memory result from a full post-startup ESKF run.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/runtime_loop.hpp#L27">source</a></div>
+
+```cpp
+struct EskfRunResult
+```
+:::
+
+**Fields**
+
+- `log_rows`: One row per GPS update after startup.
+- `num_gps_updates`: Number of processed GPS updates.
+- `raw_gps_rmse_xy`: Raw GPS horizontal RMSE.
+- `eskf_rmse_xy`: ESKF horizontal RMSE.
+
+## `Eskf` {#eskf}
+
+Error-state Kalman filter over position, velocity, and attitude.
+
+**Signature**
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L18">source</a></div>
+
+```cpp
+class Eskf
+```
+:::
+
+### Methods
+
+#### `Initialize()`
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L28">source</a></div>
+
+```cpp
+void Initialize(const StartupInitialization& startup_initialization);
+```
+:::
+
+Initialize the filter from the startup initialization.
+
+##### Non-obvious behavior
+
+This seeds the nominal state and covariance for the first live
+IMU/GPS updates after startup.
+
+##### Inputs
+
+- `startup_initialization`: Startup state used to begin filtering.
+
+#### `Predict()`
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L42">source</a></div>
+
+```cpp
+void Predict(const ImuSample& current_imu_sample);
+```
+:::
+
+Propagate the filter from the previous IMU sample to the current one.
+
+##### Inputs
+
+- `current_imu_sample`: Current IMU sample k used for propagation from t_{k-1} to t_k.
+
+##### Preconditions
+
+`Initialize()` has been called.
+
+##### Throws
+
+`std::runtime_error` If the filter is not initialized, or if the state covariance becomes numerically invalid during propagation.
+
+#### `UpdateGps()`
+
+::: {.cpp-api-signature-block}
+<div class="cpp-api-signature-source"><a href="https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L56">source</a></div>
+
+```cpp
+GpsUpdateResult UpdateGps(const GpsSample& gps_sample);
+```
+:::
+
+Update the filter with one 2D GPS position measurement.
+
+##### Inputs
+
+- `gps_sample`: GPS measurement at the current update time.
+
+##### Output
+
+Innovation and NIS from this GPS update.
+
+##### Preconditions
+
+`Initialize()` has been called.
+
+##### Throws
+
+`std::runtime_error` If the filter is not initialized, if the innovation covariance cannot be factorized, or if the state covariance becomes numerically invalid during the update.
+
+### Accessors
+
+| Signature | Description | Output | Preconditions | Throws |
+| --- | --- | --- | --- | --- |
+| [`const Eigen::Vector3d& PositionG() const`](https://github.com/jreich218/imu-gps-eskf/blob/main/include/eskf.hpp#L67) | Get the current nominal position in frame G. | Current nominal position in frame G. | `Initialize()` has been called. | `std::runtime_error` If the filter is not initialized. |

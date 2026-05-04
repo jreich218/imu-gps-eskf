@@ -1,0 +1,86 @@
+---
+title: "Initialization"
+---
+
+This page records how startup builds the handoff state for the live filter.
+
+## Purpose
+
+Startup uses early IMU, synthetic GPS, and wheel-speed samples to produce one `StartupInitialization` object.
+
+That object contains:
+
+- `p0_G`
+- `v0_G`
+- `q0_GI`
+- `previous_imu_utime`
+- `first_unprocessed_imu_index`
+- `first_unprocessed_gps_index`
+
+The live filter begins from that handoff state.
+
+## Where startup begins
+
+Startup begins on the IMU time axis.
+
+GPS samples earlier than the first IMU sample are ignored.
+
+Startup needs at least three usable GPS samples. If no trustworthy handoff state is found, startup returns `std::nullopt`.
+
+## GPS path fit
+
+Startup grows a GPS window one sample at a time.
+
+For each candidate window, it fits quadratic `x(t)` and `y(t)` paths in a local time coordinate whose zero is the window end.
+
+That fit supplies:
+
+- the ready position at the window end
+- the local tangent velocity at the window end
+
+Windows are skipped when the fitted endpoint speed is too small.
+
+## Readiness gate
+
+Startup does not end on GPS geometry alone.
+
+Instead, startup converts the four wheel speeds from `scene-XXXX_zoe_veh_info.json` into one robust speed magnitude, smooths that signal over a short trailing window, and integrates it from `startup_begin_utime`.
+
+Startup is allowed to finish only after this wheel-supported travel reaches `10 m`.
+
+A candidate is rejected if reaching that point would leave no processable post-startup GPS update for the live filter.
+
+Projected GPS span is computed during startup, but readiness is decided by wheel-supported travel.
+
+## Heading
+
+Startup forms one heading candidate from the GPS window itself.
+
+Let `N` be the number of GPS samples in the candidate window. Startup chooses `k = min(clamp(floor(N / 4), 2, 6), floor(N / 2))`, averages the first `k` GPS positions, averages the last `k` GPS positions, and takes the direction from the early mean to the late mean.
+
+It also forms a global heading from the GPS cloud principal direction, using IMU yaw change to make that heading curvature-aware when the GPS cloud is not line-like.
+
+The startup yaw is then the unit-circle blend of:
+
+- `75%` cluster-mean direction
+- `25%` global heading
+
+The final yaw comes from this blend.
+
+## Speed
+
+The handed-off speed magnitude comes from the smoothed robust wheel-speed magnitude at the ready time.
+
+Startup then combines that magnitude with the chosen startup heading direction to form `v0_G`.
+
+## IMU handoff
+
+Once startup has a ready 2D state, it carries that state forward to the first IMU sample at or after the ready time.
+
+That handoff step:
+
+- carries position forward across the gap using the ready velocity
+- carries yaw forward across the gap using IMU yaw change
+- builds `q0_GI` from the carried startup yaw and the handoff IMU sample's `q_AI`
+
+The returned `StartupInitialization` is the exact handoff used by the live loop.
